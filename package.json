@@ -10,7 +10,8 @@
     "assets": "python -I scripts/build_assets.py .",
     "bass": "python -I scripts/analyse_bass.py about/song1.wav",
     "audio": "python -I scripts/encode_audio.py",
-    "index": "node scripts/build_index.mjs"
+    "index": "node scripts/build_index.mjs",
+    "icon": "python -I scripts/build_icon.py"
   },
   "dependencies": {
     "react": "^18.3.1",
