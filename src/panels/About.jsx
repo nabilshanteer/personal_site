@@ -126,6 +126,11 @@ const RIPPLE_ALPHA = 0.26 // faint, the way they are on panel one
 export default function About() {
   const [phase, setPhase] = useState('off') // off | falling | crystallised
   const [muted, setMuted] = useState(false)
+  /* A phone has no keyboard, so the keyboard wording is not just noise —
+     it describes controls that are not there. */
+  const [coarse] = useState(
+    () => typeof window !== 'undefined' && !!window.matchMedia?.('(pointer: coarse)')?.matches
+  )
   const [drifting, setDrifting] = useState(false)
   const [track, setTrack] = useState(0)
   const [playing, setPlaying] = useState(false)
@@ -1211,7 +1216,7 @@ export default function About() {
         </div>
       </div>
 
-      {phase === 'falling' && (
+      {phase === 'falling' && !coarse && (
         <button
           className="about__skip"
           type="button"
@@ -1228,11 +1233,35 @@ export default function About() {
         </button>
       )}
 
-      <p className="about__hint">
-        {phase === 'falling'
-          ? 'ANY KEY to skip · ESC to leave'
-          : 'SPACE or ENTER mutes · ESC to leave'}
-      </p>
+      {/* On a touch screen the hint becomes the control it describes, so
+          the words are true and there is one thing at the bottom of the
+          screen rather than two fighting for the same corner. */}
+      {coarse ? (
+        <button
+          className="about__hint about__hint--tap"
+          type="button"
+          onClick={() => {
+            if (phase === 'falling') {
+              const player = audio.current
+              if (player && Number.isFinite(player.duration)) {
+                player.currentTime = Math.max(player.currentTime, CLIMAX)
+              }
+              lights(CLIMAX)
+              crystallise()
+              return
+            }
+            toggleMute()
+          }}
+        >
+          {phase === 'falling' ? 'TAP TO SKIP' : muted ? 'TAP TO UNMUTE' : 'TAP TO MUTE'}
+        </button>
+      ) : (
+        <p className="about__hint">
+          {phase === 'falling'
+            ? 'ANY KEY to skip · ESC to leave'
+            : 'SPACE or ENTER mutes · ESC to leave'}
+        </p>
+      )}
 
       <button className="about__close" type="button" onClick={restore} aria-label="Close about">
         <svg viewBox="0 0 24 24" aria-hidden="true">
