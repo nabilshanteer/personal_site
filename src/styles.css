@@ -1421,9 +1421,57 @@ body {
 .readout__open:hover { background: rgba(255, 143, 58, 0.14); }
 
 @media (max-width: 760px) {
-  .dial { left: -18vw; width: 92vw; }
-  .readout { right: 1rem; }
-  .dial__name { font-size: 1rem; }
+  /* The wheel and the list had been sharing one screen's width. The dial
+     was blown up to 92vw and hung 18vw off the left edge while the
+     readout stayed pinned to the right, so on a phone the category
+     titles printed straight through the project list.
+
+     They stack now: a smaller wheel still hung off the left, so the
+     titles read rightwards into open space the way they do on a desktop,
+     and the readout and list underneath it across the full width. */
+  .dial {
+    --size: min(66vw, 30vh);
+    top: clamp(8rem, 22vh, 12.5rem);
+    left: -20vw;
+    width: var(--size);
+  }
+
+  /* The rotating category names need open space to the right of the
+     wheel, and a phone has none — they were running off the edge of the
+     screen mid-word. The readout underneath already names whichever
+     category is live, so here the wheel is the dial and the words are
+     the readout. */
+  .dial__titles { display: none; }
+
+  .readout {
+    top: auto;
+    bottom: clamp(1rem, 3.5vh, 2rem);
+    left: clamp(1.1rem, 5vw, 2rem);
+    right: clamp(1.1rem, 5vw, 2rem);
+    width: auto;
+    text-align: left;
+  }
+
+  .readout__kicker { margin-top: 0.5rem; }
+
+  .sheet-list {
+    margin: 0.9rem 0 0;
+    max-width: none;
+  }
+
+  /* An eighteen-pixel line is not something a thumb can hit. The row is
+     a flex button whose padding is zeroed further up the cascade, so the
+     height is set directly rather than fought for with padding. */
+  .sheet-list__item { padding: 2px 0; }
+
+  .sheet-list__item button {
+    width: 100%;
+    min-height: 40px;
+    align-items: center;
+    text-align: left;
+  }
+
+  .dial__name { font-size: 0.95rem; }
 }
 
 @media (prefers-reduced-motion: reduce) {

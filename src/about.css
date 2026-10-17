@@ -994,3 +994,26 @@
   .about[data-phase='crystallised'] .about__sheet { animation-duration: 0.3s; }
   .about__facet { display: none; }
 }
+
+
+/* =================================================================
+   Phones.
+   ================================================================= */
+
+@media (max-width: 760px) {
+  /* The transport was built at 28px, which is fine for a cursor and far
+     too small for a thumb — Apple and Google both put the floor at
+     around 44. min-height rather than padding, because these are flex
+     buttons whose padding is reset elsewhere. */
+  .player__play,
+  .player__mute,
+  .player__back,
+  .player__next,
+  .player__out {
+    min-width: 40px;
+    min-height: 40px;
+  }
+
+  /* 8px is not readable at arm's length on a phone. */
+  .about__hint { font-size: 0.68rem; }
+}
