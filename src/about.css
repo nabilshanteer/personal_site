@@ -1056,3 +1056,10 @@
   /* 8px is not readable at arm's length on a phone. */
   .about__hint { font-size: 0.68rem; }
 }
+
+
+/* The way out now sits in the nav bar with the ways in, so this one
+   stands down. It has to be declared here rather than in styles.css:
+   this sheet is imported after that one, so a rule written there loses
+   to the base button above on source order alone. */
+.about__close { display: none; }

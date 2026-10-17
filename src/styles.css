@@ -695,11 +695,41 @@ body {
   background: var(--accent);
 }
 
-/* A panel keeps its close button in the same corner, so step aside for
-   it rather than sitting underneath. */
-:root[data-panel] .sitenav {
-  right: calc(clamp(1rem, 3vw, 2.5rem) + 38px + 0.6rem);
+/* The way out, sitting with the ways in. A panel's own close button in
+   the same corner made two sets of controls out of one. */
+.sitenav__close {
+  display: inline-grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  margin-left: 0.15rem;
+  padding: 0;
+  border: 1px solid rgba(255, 199, 143, 0.34);
+  border-radius: 999px;
+  background: rgba(10, 8, 14, 0.72);
+  backdrop-filter: blur(8px);
+  color: rgba(246, 236, 226, 0.92);
+  cursor: pointer;
+  transition: color 0.25s ease, border-color 0.25s ease, background 0.25s ease,
+    transform 0.3s ease;
 }
+
+.sitenav__close svg {
+  width: 14px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+}
+
+.sitenav__close:hover,
+.sitenav__close:focus-visible {
+  color: #ffd2a1;
+  border-color: rgba(255, 143, 58, 0.85);
+  background: rgba(255, 143, 58, 0.16);
+  transform: rotate(90deg);
+}
+
 
 /* On a phone they move to a bar across the bottom: a thumb is already
    there, and the top edge belongs to the mark and to the panels' close
@@ -733,6 +763,16 @@ body {
   }
 
   .sitenav__pad { display: none; }
+
+  .sitenav__close {
+    flex: 0 0 auto;
+    width: 38px;
+    height: 38px;
+    margin-left: 0.1rem;
+    border-color: rgba(255, 199, 143, 0.3);
+    background: rgba(255, 143, 58, 0.1);
+    backdrop-filter: none;
+  }
 
   /* Nothing should end up underneath the bar. */
   .about__sheet,

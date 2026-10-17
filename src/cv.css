@@ -657,3 +657,10 @@
   .cv[data-phase='here'] .cv__doc,
   .cv__close { animation-duration: 0.2s; animation-delay: 0s; }
 }
+
+
+/* The way out now sits in the nav bar with the ways in, so this one
+   stands down. It has to be declared here rather than in styles.css:
+   this sheet is imported after that one, so a rule written there loses
+   to the base button above on source order alone. */
+.cv__close { display: none; }
