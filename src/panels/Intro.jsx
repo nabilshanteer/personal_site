@@ -2,7 +2,6 @@ import { useEffect, useRef } from 'react'
 import Backdrop from '../layers/Backdrop'
 import Portrait from '../layers/Portrait'
 import Monogram from '../components/Monogram'
-import Controls from '../components/Controls'
 import StatusCard from '../components/StatusCard'
 import { trackPointer } from '../lib/pointer'
 
@@ -33,7 +32,6 @@ export default function Intro() {
       <Portrait />
 
       <Monogram />
-      <Controls />
       <StatusCard />
 
       <h1 className="mark">

@@ -3,6 +3,7 @@ import Stage from './panels/Stage'
 import About from './panels/About'
 import Contact from './panels/Contact'
 import Cv from './panels/Cv'
+import Controls from './components/Controls'
 import Projects from './panels/Projects'
 
 /* /admin is the notes page. It only exists while this is running on your
@@ -29,6 +30,7 @@ export default function App() {
       <About />
       <Contact />
       <Cv />
+      <Controls />
     </>
   )
 }

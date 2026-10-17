@@ -41,12 +41,6 @@ export const LINES = [
     note: 'the code',
     href: 'https://github.com/nabilshanteer',
   },
-  {
-    id: 'spotify',
-    label: 'SPOTIFY',
-    note: 'the other half',
-    href: 'https://open.spotify.com/track/2eKTFR9Z9kctLnOCl7RveF',
-  },
 ]
 
 /* How long the cable takes to reach you before the board resolves.

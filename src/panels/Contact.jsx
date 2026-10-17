@@ -19,10 +19,12 @@ import Message from '../components/Message'
    is the page someone opens when they have already decided to get in
    touch — making them wait is the one thing it must not do. */
 
+/* Spread about the middle of the board rather than down from the top, so
+   the column stays centred however many lines there are. */
 const SOCKETS = LINES.map((line, i) => ({
   ...line,
   x: 92,
-  y: 20 + i * 20,
+  y: 50 + (i - (LINES.length - 1) / 2) * 20,
 }))
 
 const PLUG = { x: 16, y: 50 }
