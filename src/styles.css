@@ -535,6 +535,76 @@ body {
   .monogram__links { transform: translate(-50%, 0); }
 }
 
+/* --- with a mouse, the way it was --------------------------------- */
+
+/* The drop-down is right for a finger: tap, the pair appears, tap one.
+   With a cursor it was wrong — the panel hangs below the mark with a gap
+   between, and moving down to reach a link leaves the dock, which closes
+   the thing being reached for.
+
+   So on a pointer the mark goes back to swapping in place: the dock is
+   wide enough that the cursor never leaves it on the way to a link, the
+   package fades out, and the two take its place on the same line. */
+@media (hover: hover) {
+  .monogram-dock {
+    width: clamp(200px, 20vw, 260px);
+    height: clamp(30px, 3vw, 42px);
+  }
+
+  .monogram {
+    inset: 0;
+    margin: auto;
+    width: clamp(30px, 3vw, 42px);
+    height: 100%;
+  }
+
+  .monogram-dock:hover .monogram,
+  .monogram-dock:focus-within .monogram {
+    opacity: 0;
+    transform: scale(1.08);
+    pointer-events: none;
+  }
+
+  /* In place of the mark, not under it — and with none of the panel's
+     chrome, which only existed to make a floating box readable. */
+  .monogram__links {
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 1.1rem;
+    min-width: 0;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: none;
+    box-shadow: none;
+    transform: none;
+  }
+
+  .monogram-dock:hover .monogram__links,
+  .monogram-dock:focus-within .monogram__links,
+  .monogram-dock[data-open='true'] .monogram__links {
+    transform: none;
+  }
+
+  .monogram__links a {
+    min-height: 0;
+    padding: 0.3rem 0.1rem;
+    border-radius: 0;
+    border-bottom: 1px solid transparent;
+  }
+
+  .monogram__links a:hover,
+  .monogram__links a:focus-visible {
+    background: none;
+    border-bottom-color: rgba(255, 143, 58, 0.7);
+  }
+}
+
 .monogram svg { width: 100%; height: auto; display: block; overflow: visible; }
 
 .monogram__body,
@@ -553,57 +623,90 @@ body {
 
 
 
-/* Top right: projects and menu */
+/* Top right: the way into everything -------------------------------- */
 
-.controls {
+/* This was a glyph that opened a menu holding these four. Four words
+   take less room than the panel that hid them, and nobody has to guess
+   what a glyph means or press it twice. */
+.sitenav {
   position: absolute;
   z-index: 6;
   top: clamp(0.5rem, 1vh, 0.9rem);
   right: clamp(0.6rem, 1vw, 1rem);
   display: flex;
   align-items: center;
-  gap: clamp(0.5rem, 1.2vw, 1.1rem);
+  gap: clamp(0.2rem, 0.8vw, 0.7rem);
 }
 
-.control {
+.sitenav__link {
   display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.72rem 0.7rem;
-  border: 1px solid rgba(238, 241, 246, 0.22);
-  border-radius: 4px;
-  background: rgba(10, 12, 16, 0.55);
-  color: var(--ink);
+  gap: 0.45rem;
+  min-height: 38px;
+  padding: 0.5rem 0.78rem;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background: none;
   font-family: 'Corpta', system-ui, sans-serif;
-  font-size: clamp(0.62rem, 0.85vw, 0.8rem);
-  letter-spacing: 0.08em;
-  line-height: 1;
-  text-decoration: none;
+  font-size: 0.6rem;
+  letter-spacing: 0.2em;
+  color: rgba(238, 241, 246, 0.72);
   cursor: pointer;
-  transition: color 0.3s ease, border-color 0.3s ease, background 0.3s ease;
+  transition: color 0.25s ease, border-color 0.25s ease, background 0.25s ease;
 }
 
-.control--icon { padding: 0.72rem 0.55rem; }
-
-.control__icon {
-  width: clamp(13px, 1.1vw, 16px);
-  height: auto;
-  display: block;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 1.7;
-  stroke-linecap: round;
-  stroke-linejoin: round;
+/* The pad each one sits on, in the same language as the rest of the
+   board. */
+.sitenav__pad {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 143, 58, 0.45);
+  transition: border-color 0.25s ease, background 0.25s ease;
 }
 
-.control__icon rect { fill: currentColor; stroke: none; }
-.control__icon circle { fill: currentColor; stroke: none; }
-.control__route { fill: none; stroke: currentColor; }
-
-.control:hover {
-  color: var(--accent);
-  border-color: rgba(255, 143, 58, 0.55);
+.sitenav__link:hover,
+.sitenav__link:focus-visible {
+  color: var(--ink);
+  border-color: rgba(255, 143, 58, 0.42);
   background: rgba(255, 143, 58, 0.08);
+}
+
+.sitenav__link:hover .sitenav__pad,
+.sitenav__link:focus-visible .sitenav__pad {
+  border-color: var(--accent);
+  background: var(--accent);
+}
+
+/* On a phone they move to a bar across the bottom: a thumb is already
+   there, and the top edge belongs to the mark. Fixed rather than
+   absolute so it is reachable from anywhere on the page; the panels sit
+   far above it and cover it when they open. */
+@media (max-width: 760px) {
+  .sitenav {
+    position: fixed;
+    top: auto;
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 0.6rem);
+    left: 0.6rem;
+    right: 0.6rem;
+    gap: 0.2rem;
+    padding: 0.28rem;
+    border: 1px solid rgba(255, 199, 143, 0.22);
+    border-radius: 999px;
+    background: rgba(8, 7, 12, 0.86);
+    backdrop-filter: blur(10px);
+  }
+
+  .sitenav__link {
+    flex: 1 1 0;
+    justify-content: center;
+    min-height: 42px;
+    padding: 0.4rem 0.15rem;
+    font-size: 0.52rem;
+    letter-spacing: 0.09em;
+  }
+
+  .sitenav__pad { display: none; }
 }
 
 /* Bottom left: the location card */

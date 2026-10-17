@@ -139,7 +139,7 @@ export const THESES = [
        `from`/`to` are when the thesis itself was worked on, which is what
        the CV states and what the entry shows; `span` is the stage of the
        degree it belongs to, which is what makes a readable trace. */
-    span: { from: '2022', to: '2025' },
+    span: { from: 'Sep 2022', to: '2025' },
     title: 'Deep Learning for Activity Recognition in Surveillance',
     place: 'University of Southampton, UK',
     from: 'Sep 2024',

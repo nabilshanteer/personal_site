@@ -1,10 +1,9 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef } from 'react'
 import Backdrop from '../layers/Backdrop'
 import Portrait from '../layers/Portrait'
 import Monogram from '../components/Monogram'
 import Controls from '../components/Controls'
 import StatusCard from '../components/StatusCard'
-import Menu from '../components/Menu'
 import { trackPointer } from '../lib/pointer'
 
 /* Panel one.
@@ -20,7 +19,6 @@ import { trackPointer } from '../lib/pointer'
 
 export default function Intro() {
   const panel = useRef(null)
-  const [menuOpen, setMenuOpen] = useState(false)
 
   useEffect(() => {
     if (!panel.current) return
@@ -35,9 +33,8 @@ export default function Intro() {
       <Portrait />
 
       <Monogram />
-      <Controls onMenu={() => setMenuOpen((open) => !open)} menuOpen={menuOpen} />
+      <Controls />
       <StatusCard />
-      <Menu open={menuOpen} onClose={() => setMenuOpen(false)} />
 
       <h1 className="mark">
         <a className="mark__link" href="/" aria-label="Nabil Al-Shanteer — home">

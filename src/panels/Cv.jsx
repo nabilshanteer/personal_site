@@ -38,7 +38,7 @@ function when(text, end = false) {
    means nothing to anyone who has not stood in front of one. */
 const CHANNELS = [
   { id: 'exp', name: 'EXPERIENCE', rgb: [255, 146, 58] },
-  { id: 'thesis', name: 'THESES', rgb: [92, 214, 224] },
+  { id: 'thesis', name: 'EDUCATION', rgb: [92, 214, 224] },
   { id: 'place', name: 'LOCATION', rgb: [178, 142, 255] },
 ]
 
