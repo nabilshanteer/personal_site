@@ -168,6 +168,10 @@ export default function About() {
   const shown = useRef(-1)
   const meter = useRef(null)
   const beam = useRef(null)
+  /* The gain between the analyser and the speakers. A tapped element's
+     `muted` does not gate the graph, so this is what actually silences
+     the music. */
+  const gate = useRef(null)
   const [landed, setLanded] = useState(false)
   // Which bubble is being read, if one has been clicked open.
   const [pinned, setPinned] = useState(null)
@@ -197,6 +201,22 @@ export default function About() {
     const next = !player.muted
     player.muted = next
     if (loop.current) loop.current.muted = next
+
+    /* Both elements are tapped by createMediaElementSource, and a tapped
+       element's `muted` no longer gates what comes out of the graph —
+       the source node sits ahead of it. So muting did nothing audible,
+       and the sound only stopped later when a handover or a ramp moved
+       the volume, which is what read as a six second delay. The gain
+       before the destination is what actually silences it. Twenty
+       milliseconds rather than a hard zero, which would click. */
+    const out = gate.current
+    if (out) {
+      const now = out.context.currentTime
+      out.gain.cancelScheduledValues(now)
+      out.gain.setValueAtTime(out.gain.value, now)
+      out.gain.linearRampToValueAtTime(next ? 0 : 1, now + 0.02)
+    }
+
     setMuted(next)
   }, [])
 
@@ -290,7 +310,11 @@ export default function About() {
     // is not yet connected to anywhere is how you get a track that is
     // playing, with a running clock, and no sound at all — and if the
     // second source then throws, the first is left in that state forever.
-    analyser.connect(context.destination)
+    const volume = context.createGain()
+    volume.gain.value = 1
+    analyser.connect(volume)
+    volume.connect(context.destination)
+    gate.current = volume
 
     let tapped = 0
     for (const element of [audio.current, loop.current]) {
