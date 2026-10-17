@@ -1429,11 +1429,25 @@ body {
      They stack now: a smaller wheel still hung off the left, so the
      titles read rightwards into open space the way they do on a desktop,
      and the readout and list underneath it across the full width. */
+  /* The wheel's size and seat are declared on the panel so the readout
+     can be hung off the bottom of it. Anchoring the readout to the
+     bottom of the screen instead meant a long category grew the list
+     UPWARDS into the wheel: seven rows on a short phone pushed its top
+     to -21px and put 200px of list straight through the dial. */
+  .projects__sticky {
+    --wheel: min(56vw, 25vh);
+    --wheel-top: clamp(3.4rem, 8vh, 5rem);
+  }
+
   .dial {
-    --size: min(66vw, 30vh);
-    top: clamp(8rem, 22vh, 12.5rem);
+    --size: var(--wheel);
+    top: var(--wheel-top);
     left: -20vw;
     width: var(--size);
+    /* As with the readout: the desktop rule centres the wheel on the
+       panel with translateY(-50%), which here silently moved `top` by
+       half the wheel's height and hung it off the top of the screen. */
+    transform: none;
   }
 
   /* The rotating category names need open space to the right of the
@@ -1443,9 +1457,17 @@ body {
      the readout. */
   .dial__titles { display: none; }
 
+  /* Seated under the wheel and growing downwards, so the number of
+     projects in a category changes where the list ends, never where it
+     starts. */
   .readout {
-    top: auto;
-    bottom: clamp(1rem, 3.5vh, 2rem);
+    top: calc(var(--wheel-top) + var(--wheel) + 1rem);
+    bottom: auto;
+    /* The desktop rule centres this with translateY(-50%). Left in
+       place it pulls the block up by half its own height — so the more
+       projects a category has, the further it climbs into the wheel,
+       which is the collision itself rather than a side effect of it. */
+    transform: none;
     left: clamp(1.1rem, 5vw, 2rem);
     right: clamp(1.1rem, 5vw, 2rem);
     width: auto;
@@ -1462,7 +1484,7 @@ body {
   /* An eighteen-pixel line is not something a thumb can hit. The row is
      a flex button whose padding is zeroed further up the cascade, so the
      height is set directly rather than fought for with padding. */
-  .sheet-list__item { padding: 2px 0; }
+  .sheet-list__item { padding: 1px 0; }
 
   .sheet-list__item button {
     width: 100%;
