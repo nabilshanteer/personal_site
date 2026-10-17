@@ -128,6 +128,17 @@ export default function About() {
   const [muted, setMuted] = useState(false)
   /* A phone has no keyboard, so the keyboard wording is not just noise —
      it describes controls that are not there. */
+  /* Land the arrival now: move the music to the point the page settles
+     at, bring the lights with it, and crystallise. */
+  const skipArrival = useCallback(() => {
+    const player = audio.current
+    if (player && Number.isFinite(player.duration)) {
+      player.currentTime = Math.max(player.currentTime, CLIMAX)
+    }
+    lights(CLIMAX)
+    crystallise()
+  }, [])
+
   const [coarse] = useState(
     () => typeof window !== 'undefined' && !!window.matchMedia?.('(pointer: coarse)')?.matches
   )
@@ -160,6 +171,11 @@ export default function About() {
   const [landed, setLanded] = useState(false)
   // Which bubble is being read, if one has been clicked open.
   const [pinned, setPinned] = useState(null)
+  /* A bubble closed by a click has to stay closed while the cursor is
+     still sitting on it; without this :hover reopens it the moment the
+     click lands, so on a desktop it never appears to close at all. It
+     clears when the pointer leaves, so hovering still peeks. */
+  const [shut, setShut] = useState(null)
   // The draw loop runs outside React, so it reads the ref, not the state.
   const landedRef = useRef(false)
   // Listeners live for the life of the panel, so they read the current
@@ -1084,26 +1100,14 @@ export default function About() {
   )
 
   return (
-    <div
-      className="about"
-      data-phase={phase}
-      aria-hidden={phase === 'off'}
-      /* While it is arriving, anywhere on the screen skips. A phone has
-         no keyboard to press, and hunting for one small pill at the
-         bottom is a poor substitute for the whole screen being the
-         button. The way out is excluded, or leaving would skip instead
-         of closing. */
-      onClick={(event) => {
-        if (phase !== 'falling') return
-        if (event.target instanceof Element && event.target.closest('.about__close')) return
-        const player = audio.current
-        if (player && Number.isFinite(player.duration)) {
-          player.currentTime = Math.max(player.currentTime, CLIMAX)
-        }
-        lights(CLIMAX)
-        crystallise()
-      }}
-    >
+    <div className="about" data-phase={phase} aria-hidden={phase === 'off'}>
+      {/* Anywhere on the screen skips while it is arriving. This has to
+          be a real element: the panel itself is pointer-events:none, so
+          a handler on it never sees the tap — it falls through to the
+          page behind. */}
+      {phase === 'falling' && (
+        <button className="skip-sheet" type="button" aria-label="Skip the intro" onClick={skipArrival} />
+      )}
       {/* A track with no separate loop file simply repeats itself. */}
       <audio
         ref={audio}
@@ -1239,14 +1243,7 @@ export default function About() {
         <button
           className="about__skip"
           type="button"
-          onClick={() => {
-            const player = audio.current
-            if (player && Number.isFinite(player.duration)) {
-              player.currentTime = Math.max(player.currentTime, CLIMAX)
-            }
-            lights(CLIMAX)
-            crystallise()
-          }}
+          onClick={skipArrival}
         >
           SKIP
         </button>
@@ -1261,12 +1258,7 @@ export default function About() {
           type="button"
           onClick={() => {
             if (phase === 'falling') {
-              const player = audio.current
-              if (player && Number.isFinite(player.duration)) {
-                player.currentTime = Math.max(player.currentTime, CLIMAX)
-              }
-              lights(CLIMAX)
-              crystallise()
+              skipArrival()
               return
             }
             toggleMute()
@@ -1318,7 +1310,24 @@ export default function About() {
               /* Hovering opens it; clicking keeps it open, which is what
                  you want once there is enough text to scroll through. */
               data-open={pinned === hobby.key}
-              onClick={() => setPinned((k) => (k === hobby.key ? null : hobby.key))}
+              data-shut={shut === hobby.key ? 'true' : undefined}
+              onPointerLeave={() => setShut((k) => (k === hobby.key ? null : k))}
+              onClick={() => {
+                // Re-opening something this click had closed.
+                if (shut === hobby.key) {
+                  setShut(null)
+                  setPinned(hobby.key)
+                  return
+                }
+                // Open — pinned, or merely hovered, which on a mouse is
+                // always true of the thing being clicked. Close it.
+                if (pinned === hobby.key || !coarse) {
+                  setPinned(null)
+                  setShut(hobby.key)
+                  return
+                }
+                setPinned(hobby.key)
+              }}
               onKeyDown={(e) => {
                 if (e.key !== 'Enter' && e.key !== ' ') return
                 e.stopPropagation()

@@ -201,9 +201,9 @@
 .hobby[data-side='right'] .hobby__bubble { transform-origin: left center; }
 .hobby[data-side='left'] .hobby__bubble { transform-origin: right center; }
 
-.hobby__bubble:hover,
-.hobby__bubble:focus-within,
-.hobby__bubble:focus-visible,
+.hobby__bubble:not([data-shut='true']):hover,
+.hobby__bubble:not([data-shut='true']):focus-within,
+.hobby__bubble:not([data-shut='true']):focus-visible,
 .hobby__bubble[data-open='true'] {
   transform: translateY(-6px) scale(1.015);
   border-color: rgba(255, 199, 143, 0.5);
@@ -237,8 +237,8 @@
 /* The reading area is the whole of the card below the title — the
    subtitle included, so scrolling far enough carries it off the top
    rather than leaving it pinned above a moving block. */
-.hobby__bubble:hover .hobby__read,
-.hobby__bubble:focus-within .hobby__read,
+.hobby__bubble:not([data-shut='true']):hover .hobby__read,
+.hobby__bubble:not([data-shut='true']):focus-within .hobby__read,
 .hobby__bubble[data-open='true'] .hobby__read {
   overflow-y: auto;
   max-height: min(46vh, 460px);
@@ -262,9 +262,9 @@
   border-color: rgba(255, 199, 143, 0.6);
 }
 
-.hobby__bubble:hover .hobby__more,
-.hobby__bubble:focus-within .hobby__more,
-.hobby__bubble:focus-visible .hobby__more,
+.hobby__bubble:not([data-shut='true']):hover .hobby__more,
+.hobby__bubble:not([data-shut='true']):focus-within .hobby__more,
+.hobby__bubble:not([data-shut='true']):focus-visible .hobby__more,
 .hobby__bubble[data-open='true'] .hobby__more {
   grid-template-rows: 1fr;
   opacity: 1;
@@ -293,9 +293,9 @@
   margin-top: 0.9rem;
 }
 
-.hobby__bubble:hover .hobby__more p:first-child,
-.hobby__bubble:focus-within .hobby__more p:first-child,
-.hobby__bubble:focus-visible .hobby__more p:first-child,
+.hobby__bubble:not([data-shut='true']):hover .hobby__more p:first-child,
+.hobby__bubble:not([data-shut='true']):focus-within .hobby__more p:first-child,
+.hobby__bubble:not([data-shut='true']):focus-visible .hobby__more p:first-child,
 .hobby__bubble[data-open='true'] .hobby__more p:first-child {
   border-top-color: rgba(255, 199, 143, 0.18);
 }
@@ -555,8 +555,15 @@
   .orbit__ring--outer { --r: clamp(168px, 52vw, 255px); --size: clamp(66px, 20vw, 90px); }
 
   /* The hint is the control on a touch screen, so it has to be reachable
-     and worth hitting. */
-  .about__hint--tap {
+     and worth hitting.
+
+     Two classes, not one: the base .about__hint sets pointer-events to
+     none and is declared further down this file, so at equal specificity
+     it wins and the button cannot be tapped however right it looks. The
+     z-index is above the sheet for the same reason — the page's own text
+     was painting over the top of it. */
+  .about__hint.about__hint--tap {
+    z-index: 20;
     pointer-events: auto;
     cursor: pointer;
     display: inline-flex;

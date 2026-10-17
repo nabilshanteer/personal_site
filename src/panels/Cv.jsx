@@ -551,6 +551,12 @@ export default function Cv() {
       <div className="cv__lines" aria-hidden="true" />
       <div className="cv__sweep" aria-hidden="true" />
 
+      {/* The panel is pointer-events:none, so the tap needs something
+          real to land on. */}
+      {phase === 'running' && (
+        <button className="skip-sheet" type="button" aria-label="Skip" onClick={arrive} />
+      )}
+
       {phase === 'running' && (
         <div className="cv__ring">
           <p className="cv__arming">ACQUIRING</p>
