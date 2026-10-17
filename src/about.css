@@ -1063,3 +1063,16 @@
    this sheet is imported after that one, so a rule written there loses
    to the base button above on source order alone. */
 .about__close { display: none; }
+
+
+/* The nav bar runs along the bottom of a phone, and this sat behind it —
+   which is to say it vanished. It goes above the bar instead.
+
+   Declared here rather than in styles.css: that sheet is imported first,
+   so a `bottom` written there loses to the base rule above on source
+   order alone, which is exactly how this disappeared. */
+@media (max-width: 760px) {
+  .about__hint {
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 4.6rem);
+  }
+}

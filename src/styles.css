@@ -484,9 +484,10 @@ body {
   left: 50%;
   display: flex;
   flex-direction: column;
-  gap: 0.15rem;
-  padding: 0.35rem;
-  min-width: 8.5rem;
+  gap: 0.1rem;
+  padding: 0.28rem;
+  /* Narrow enough to clear the location card to its right. */
+  min-width: 6.4rem;
   border: 1px solid rgba(255, 143, 58, 0.4);
   border-radius: 0.85rem;
   background: rgba(10, 9, 14, 0.92);
@@ -509,8 +510,8 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 40px;
-  padding: 0 0.9rem;
+  min-height: 38px;
+  padding: 0 0.55rem;
   border-radius: 0.6rem;
   font-family: 'Corpta', system-ui, sans-serif;
   font-size: 0.62rem;
@@ -781,11 +782,6 @@ body {
     padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 5.5rem);
   }
 
-  /* The about page's own control sits at the bottom too; it goes above
-     the bar rather than behind it. */
-  .about__hint {
-    bottom: calc(env(safe-area-inset-bottom, 0px) + 4.2rem);
-  }
 }
 
 /* Bottom left: the location card */
@@ -1759,12 +1755,45 @@ body {
 @media (max-width: 760px) {
   .card {
     display: block;
-    top: calc(clamp(0.5rem, 1vh, 0.9rem) + 2.8rem);
+    top: calc(clamp(0.5rem, 1vh, 0.9rem) + 1.3rem);
     right: clamp(0.6rem, 2vw, 1rem);
     left: auto;
     bottom: auto;
-    width: clamp(108px, 31vw, 134px);
-    height: auto;
-    aspect-ratio: 152 / 238;
+    /* Left at its own size on purpose. Everything inside — the tab that
+       sits in the notch cut out of the frame, the map, the chip and its
+       caption — is placed at fixed offsets drawn for a 152x238 box.
+       Shrinking the box moved the frame and left all of that behind it:
+       "BASED IN" landed on the border instead of in the gap made for
+       it, and the caption fell out through the bottom. */
+    width: 152px;
+    height: 238px;
+    /* Scaled rather than resized. Setting a smaller width moved the
+       frame and left the tab, the map and the caption behind at their
+       own fixed offsets; a transform takes all of it together, so the
+       tab stays in its notch and the caption stays inside the border. */
+    transform: scale(0.76);
+    transform-origin: top right;
+  }
+}
+
+
+/* The portrait on a phone.
+
+   `min(88svh, 58vw)` is governed by the width on a narrow screen, which
+   left a 217px square floating in the middle of an 812px tall page —
+   a small picture with a lot of nothing around it rather than a
+   portrait. It fills the width instead and stands on the bottom of the
+   frame, just above the nav bar, so the face sits where a face sits in
+   a portrait and the shoulders run off the edge.
+
+   After the base rule on purpose: that one also declares top and
+   transform, and at equal specificity the later rule is the one that
+   counts. */
+@media (max-width: 760px) {
+  .portrait {
+    top: auto;
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 4.2rem);
+    transform: translateX(-50%);
+    height: min(56svh, 100vw);
   }
 }
