@@ -1084,7 +1084,26 @@ export default function About() {
   )
 
   return (
-    <div className="about" data-phase={phase} aria-hidden={phase === 'off'}>
+    <div
+      className="about"
+      data-phase={phase}
+      aria-hidden={phase === 'off'}
+      /* While it is arriving, anywhere on the screen skips. A phone has
+         no keyboard to press, and hunting for one small pill at the
+         bottom is a poor substitute for the whole screen being the
+         button. The way out is excluded, or leaving would skip instead
+         of closing. */
+      onClick={(event) => {
+        if (phase !== 'falling') return
+        if (event.target instanceof Element && event.target.closest('.about__close')) return
+        const player = audio.current
+        if (player && Number.isFinite(player.duration)) {
+          player.currentTime = Math.max(player.currentTime, CLIMAX)
+        }
+        lights(CLIMAX)
+        crystallise()
+      }}
+    >
       {/* A track with no separate loop file simply repeats itself. */}
       <audio
         ref={audio}
@@ -1308,9 +1327,13 @@ export default function About() {
               }}
             >
               <h3>{hobby.label}</h3>
-              <p className="hobby__gloss">{hobby.gloss}</p>
-              {/* Opens on hover, and on focus for anyone using a keyboard. */}
-              <div className="hobby__more">
+              {/* The title stays put; everything under it reads and
+                  scrolls together, so the subtitle goes off the top with
+                  the rest instead of sitting pinned above moving text. */}
+              <div className="hobby__read">
+                <p className="hobby__gloss">{hobby.gloss}</p>
+                {/* Opens on hover, and on focus for anyone using a keyboard. */}
+                <div className="hobby__more">
                 {/* The inner box is what gets clipped, so the paragraphs'
                     own spacing collapses with it instead of holding the
                     card open by a margin's worth. */}
@@ -1330,6 +1353,7 @@ export default function About() {
                   {/* Scoped to this section, so a question asked here is
                       answered from this section first. */}
                   <Ask topic={hobby.key} label={hobby.label} />
+                  </div>
                 </div>
               </div>
             </article>

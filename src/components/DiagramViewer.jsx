@@ -22,6 +22,11 @@ export default function DiagramViewer({ sets, openSet, onChangeSet, onClose, clo
   const board = useRef(null)
   const view = useRef({ scale: 1, x: 0, y: 0 })
   const drag = useRef(null)
+  /* Every finger currently down, and the pinch they are describing.
+     touch-action is none on the stage, so the browser hands the whole
+     gesture over and nothing zooms unless this does it. */
+  const pointers = useRef(new Map())
+  const pinch = useRef(null)
   const [scaleLabel, setScaleLabel] = useState(100)
 
   const set = sets.find((s) => s.id === openSet) ?? sets[0]
@@ -126,6 +131,22 @@ export default function DiagramViewer({ sets, openSet, onChangeSet, onClose, clo
   }, [clamp, write])
 
   const onPointerDown = (event) => {
+    pointers.current.set(event.pointerId, { x: event.clientX, y: event.clientY })
+
+    if (pointers.current.size === 2) {
+      // A second finger turns a pan into a pinch.
+      drag.current = null
+      const [a, b] = [...pointers.current.values()]
+      pinch.current = {
+        dist: Math.hypot(a.x - b.x, a.y - b.y) || 1,
+        scale: view.current.scale,
+        box: stage.current.getBoundingClientRect(),
+      }
+      event.currentTarget.setPointerCapture(event.pointerId)
+      return
+    }
+    if (pointers.current.size > 2) return
+
     drag.current = {
       pointerX: event.clientX,
       pointerY: event.clientY,
@@ -141,6 +162,30 @@ export default function DiagramViewer({ sets, openSet, onChangeSet, onClose, clo
   }
 
   const onPointerMove = (event) => {
+    if (pointers.current.has(event.pointerId)) {
+      pointers.current.set(event.pointerId, { x: event.clientX, y: event.clientY })
+    }
+
+    const two = pinch.current
+    if (two && pointers.current.size >= 2) {
+      const [a, b] = [...pointers.current.values()]
+      const dist = Math.hypot(a.x - b.x, a.y - b.y) || 1
+      const v = view.current
+      const next = Math.min(MAX, Math.max(MIN, two.scale * (dist / two.dist)))
+      // Whatever is between the fingers stays between the fingers, the
+      // same rule the wheel follows for the cursor.
+      const px = (a.x + b.x) / 2 - two.box.left
+      const py = (a.y + b.y) / 2 - two.box.top
+      const k = next / v.scale
+      v.x = px - (px - v.x) * k
+      v.y = py - (py - v.y) * k
+      v.scale = next
+      clamp()
+      write()
+      setScaleLabel(Math.round(next * 100))
+      return
+    }
+
     const start = drag.current
     if (!start) return
     const dx = event.clientX - start.pointerX
@@ -152,7 +197,12 @@ export default function DiagramViewer({ sets, openSet, onChangeSet, onClose, clo
     write()
   }
 
-  const onPointerUp = () => {
+  const onPointerUp = (event) => {
+    pointers.current.delete(event?.pointerId)
+    if (pointers.current.size < 2) pinch.current = null
+    // Still a finger down: the gesture is not over.
+    if (pointers.current.size > 0) return
+
     const start = drag.current
     drag.current = null
     // Click the void, leave. Panning from the void does not count, and

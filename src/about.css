@@ -234,20 +234,23 @@
   min-height: 0;
 }
 
-.hobby__bubble:hover .hobby__more-inner,
-.hobby__bubble:focus-within .hobby__more-inner,
-.hobby__bubble[data-open='true'] .hobby__more-inner {
+/* The reading area is the whole of the card below the title — the
+   subtitle included, so scrolling far enough carries it off the top
+   rather than leaving it pinned above a moving block. */
+.hobby__bubble:hover .hobby__read,
+.hobby__bubble:focus-within .hobby__read,
+.hobby__bubble[data-open='true'] .hobby__read {
   overflow-y: auto;
-  max-height: min(44vh, 440px);
+  max-height: min(46vh, 460px);
   /* The page behind must not start moving when this reaches its end. */
   overscroll-behavior: contain;
   scrollbar-width: thin;
   scrollbar-color: rgba(255, 186, 118, 0.4) transparent;
 }
 
-.hobby__more-inner::-webkit-scrollbar { width: 6px; }
-.hobby__more-inner::-webkit-scrollbar-track { background: transparent; }
-.hobby__more-inner::-webkit-scrollbar-thumb {
+.hobby__read::-webkit-scrollbar { width: 6px; }
+.hobby__read::-webkit-scrollbar-track { background: transparent; }
+.hobby__read::-webkit-scrollbar-thumb {
   background: rgba(255, 186, 118, 0.35);
   border-radius: 99px;
 }
@@ -270,12 +273,12 @@
 .hobby__more p {
   margin: 1.1rem 0 0;
   padding-top: 1.1rem;
-  /* Justified, so the block has a straight edge on both sides. Hyphens
-     are on because justified text in a narrow column opens ugly gaps
-     between words without them. */
-  text-align: justify;
-  hyphens: auto;
-  -webkit-hyphens: auto;
+  /* Ranged left. Justifying a column this narrow opens rivers between
+     the words and hyphenates its way out of them, which reads as a
+     typeset block rather than as someone talking. */
+  text-align: left;
+  hyphens: manual;
+  -webkit-hyphens: manual;
   text-wrap: pretty;
   font-size: clamp(0.92rem, 1.45vw, 1.05rem);
   color: rgba(238, 226, 214, 0.72);
@@ -540,58 +543,16 @@
 }
 
 @media (max-width: 760px) {
-  .hobby { min-height: auto; }
+  /* The arcs are back, and they are arcs. Flattening them into a strip
+     lost the whole idea — the pictures travel round a path. They are
+     allowed to cross the words now because .orbit sits at z-index 1 and
+     the card at 2, so a picture passes behind the box instead of over
+     it. Smaller radii keep the sweep on a narrow screen. */
+  .hobby { min-height: 92vh; }
   .hobby[data-side='left'] { justify-items: start; }
 
-  /* The arcs would run straight through the words on a narrow screen —
-     but hiding the orbit took the photographs with it, and the pictures
-     are the point. The rings and spokes collapse out of the way with
-     display:contents, which leaves the arms themselves as the children
-     of a plain scrolling strip under the text. */
-  .orbit {
-    display: flex;
-    position: static;
-    width: auto;
-    margin: 1.1rem 0 0;
-    padding-bottom: 0.35rem;
-    gap: 0.55rem;
-    overflow-x: auto;
-    overflow-y: hidden;
-    opacity: 1;
-    animation: none;
-    scrollbar-width: none;
-    -webkit-overflow-scrolling: touch;
-  }
-
-  .orbit::-webkit-scrollbar { display: none; }
-
-  .orbit__ring,
-  .orbit__spoke { display: contents; }
-
-  /* The arc itself, which is the part that cut through the text. */
-  .orbit__ring::before { display: none; }
-
-  .orbit__arm {
-    position: static;
-    flex: 0 0 auto;
-    width: clamp(96px, 31vw, 132px);
-    transform: none;
-    animation: none;
-    opacity: 1;
-  }
-
-  /* One height for all of them. The photographs are a mix of portrait
-     screenshots and landscape snaps, and left to their own aspect ratios
-     the strip came out between 44px and 205px tall. */
-  .orbit__arm img {
-    display: block;
-    width: 100%;
-    height: clamp(78px, 23vw, 104px);
-    object-fit: cover;
-    transform: none;
-    animation: none;
-    border-radius: 0.5rem;
-  }
+  .orbit__ring--inner { --r: clamp(104px, 34vw, 155px); --size: clamp(58px, 17vw, 74px); }
+  .orbit__ring--outer { --r: clamp(168px, 52vw, 255px); --size: clamp(66px, 20vw, 90px); }
 
   /* The hint is the control on a touch screen, so it has to be reachable
      and worth hitting. */
@@ -604,6 +565,7 @@
     padding-inline: 1.1rem;
   }
 }
+
 
 @media (prefers-reduced-motion: reduce) {
   .orbit__spoke,
@@ -908,6 +870,17 @@
 
 .player__mute[aria-pressed='true'] { color: rgba(238, 241, 246, 0.4); }
 .player__mute svg { fill: none; }
+
+@media (max-width: 760px) {
+  /* The box ran the width of the screen and sat under the close button.
+     The waveform is the part that can give: it is an ornament next to
+     the transport, and half of it still reads as a waveform. The gaps
+     come in with it, since four 40px touch targets are most of what is
+     left and those are not negotiable. */
+  .player[data-here='true'] .player__meter { width: clamp(40px, 13vw, 68px); }
+  .player { gap: 0.4rem; padding: 0.5rem 0.6rem; }
+  .player__keys { gap: 0.05rem; }
+}
 
 @media (max-width: 620px) {
   .player__words { display: none; }

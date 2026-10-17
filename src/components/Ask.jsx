@@ -38,7 +38,11 @@ function format(text) {
 
 const TURNS = 4 // how much of the exchange rides along with a follow-up
 
+const COARSE =
+  typeof window !== 'undefined' && !!window.matchMedia?.('(pointer: coarse)')?.matches
+
 export default function Ask({ topic, label }) {
+  const coarse = COARSE
   const [thread, setThread] = useState([])
   const [draft, setDraft] = useState('')
   const [waiting, setWaiting] = useState(false)
@@ -94,7 +98,10 @@ export default function Ask({ topic, label }) {
           type="text"
           value={draft}
           onChange={(event) => setDraft(event.target.value)}
-          placeholder={`Ask about ${label.toLowerCase()}…`}
+          /* "Ask about music production…" is wider than a phone's field
+             and gets cut mid-word. The card it sits in already says what
+             it is about. */
+          placeholder={coarse ? 'Ask anything' : `Ask about ${label.toLowerCase()}…`}
           aria-label={`Ask about ${label}`}
           maxLength={300}
         />
