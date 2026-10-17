@@ -436,9 +436,16 @@
 }
 
 @media (max-width: 560px) {
-  .cv__pdf { flex-wrap: wrap; }
-  .cv__arrow { transform: rotate(90deg); width: 34px; }
-  @keyframes cv-nudge { 50% { transform: rotate(90deg) translateX(4px); } }
+  /* The row stays a row. It used to wrap and the arrow was turned to
+     point down after it — but the thumbnail only sometimes wrapped, so
+     most of the time the arrow pointed at the floor while the thing it
+     was pointing at was still off to the right. Keeping them on one line
+     means the arrow is simply right. */
+  .cv__pdf { flex-wrap: nowrap; gap: 0.6rem; }
+  .cv__arrow { width: 26px; }
+  .cv__thumb { width: clamp(68px, 22vw, 92px); }
+  .cv__pdfhead { font-size: 0.95rem; }
+  .cv__pdfnote { font-size: 0.78rem; }
 }
 
 .cv__rule {

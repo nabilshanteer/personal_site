@@ -206,6 +206,18 @@ export default function Message() {
     value: form[field],
     onChange: set(field),
     onBlur: leave(field),
+    /* The on-screen keyboard covers the lower half of the screen, and
+       the field it just opened for is often under it. Bringing the field
+       to the middle of what is left is the difference between being able
+       to reach the message box and not. The wait is the keyboard's own
+       animation — scrolling before it has arrived scrolls to where the
+       field used to be. */
+    onFocus: (event) => {
+      const node = event.currentTarget
+      window.setTimeout(() => {
+        node.scrollIntoView({ block: 'center', behavior: 'smooth' })
+      }, 320)
+    },
     'aria-invalid': showing(field) ? true : undefined,
     'aria-describedby': showing(field) ? `bad-${field}` : undefined,
   })

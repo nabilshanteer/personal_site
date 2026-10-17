@@ -1336,20 +1336,28 @@ export default function About() {
               data-open={pinned === hobby.key}
               data-shut={shut === hobby.key ? 'true' : undefined}
               onPointerLeave={() => setShut((k) => (k === hobby.key ? null : k))}
-              onClick={() => {
-                // Re-opening something this click had closed.
-                if (shut === hobby.key) {
-                  setShut(null)
-                  setPinned(hobby.key)
-                  return
-                }
-                // Open — pinned, or merely hovered, which on a mouse is
-                // always true of the thing being clicked. Close it.
-                if (pinned === hobby.key || !coarse) {
+              onClick={(event) => {
+                /* Ask the card whether it is open rather than working it
+                   out from state. It can be open because it is pinned,
+                   because it is hovered, or because something inside it
+                   has focus — and on a touch screen that last one is
+                   easy to land in by tapping the assistant, after which
+                   `pinned` says closed while the card is plainly open.
+                   Its own height is the one answer that is always true,
+                   and it makes a tap anywhere in the card — the title,
+                   the subtitle, the paragraphs — close it. */
+                const card = event.currentTarget
+                const body = card.querySelector('.hobby__more')
+                const isOpen = !!body && body.getBoundingClientRect().height > 4
+
+                if (isOpen) {
+                  // Focus inside would hold it open through :focus-within.
+                  if (card.contains(document.activeElement)) document.activeElement.blur()
                   setPinned(null)
                   setShut(hobby.key)
                   return
                 }
+                setShut(null)
                 setPinned(hobby.key)
               }}
               onKeyDown={(e) => {

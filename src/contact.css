@@ -237,6 +237,9 @@
 .message input,
 .message textarea {
   width: 100%;
+  /* Room for the keyboard to push the field up to without it ending
+     under the top of the panel. */
+  scroll-margin-block: 7rem 2rem;
   padding: 0.6rem 0.8rem;
   border-radius: 0.6rem;
   border: 1px solid rgba(238, 241, 246, 0.18);
@@ -560,4 +563,26 @@
   .contact__cable { animation-duration: 0.01s; }
   .contact[data-phase='connected'] .contact__sheet { animation-duration: 0.2s; }
   .contact__close { animation-duration: 0.2s; animation-delay: 0s; }
+}
+
+
+/* =================================================================
+   Phones, and the keyboard.
+   ================================================================= */
+
+/* Safari zooms the page in on any field it focuses whose text is under
+   16px, and never zooms back out. That zoom is what pushes the close and
+   menu buttons off the top of the screen, what leaves the index looking
+   scrolled when you come back to it, and half of why there is no room to
+   reach the message box. Sixteen pixels and it simply does not happen.
+
+   Set in px rather than rem on purpose: the trigger is the computed
+   size, and a user who has made their default text smaller would slip
+   back under the line with a rem. */
+@media (pointer: coarse) {
+  .message input,
+  .message textarea,
+  .message select {
+    font-size: 16px;
+  }
 }
