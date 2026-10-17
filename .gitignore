@@ -1,0 +1,55 @@
+# ── Secrets ───────────────────────────────────────────────────────────
+# The assistant's API key lives in .env.local. It must never be committed:
+# anything that reaches a public repo is public forever, even if the file
+# is deleted in a later commit.
+.env
+.env.*
+!.env.example
+
+# ── Build output ──────────────────────────────────────────────────────
+dist/
+node_modules/
+.vercel/
+
+# ── Generated assets ──────────────────────────────────────────────────
+# A note on why most of this IS committed.
+#
+# public/img, public/media and public/doc are produced by `npm run
+# assets` and `npm run audio`, which need Python, Pillow, pypdfium2 and
+# ffmpeg. The deploy only runs `npm run build`, which is Node. If these
+# were ignored the built site would come out with no portrait, no
+# project figures, no music and no CV — and nothing would report an
+# error, because as far as the build is concerned nothing is missing.
+#
+# So they are committed, and the host needs nothing but Node.
+#
+# public/data is the one exception: `npm run build` regenerates it
+# before Vite runs, so it is always fresh in the output.
+public/data/
+
+# Staging for the audio encoder; public/media/about holds the published
+# copies, which are the ones that ship.
+about/web/
+
+# ── Masters ───────────────────────────────────────────────────────────
+# The uncompressed audio and the raw video are large and are only inputs.
+about/*.wav
+images/projects/**/*.mp4
+
+# ── Editor / OS ───────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+.vscode/*
+!.vscode/extensions.json
+.idea/
+
+# ── Raw coursework ────────────────────────────────────────────────────
+# The university folders these projects were written up from. Nothing
+# reads them: the pipeline's inputs are images/, about/ and cv/, and the
+# write-ups themselves live in src/lib/work/. They are ~52 MB of source
+# material that the site does not need in order to build, so they stay
+# on your machine rather than in every clone.
+computer vision projects/
+control systems projects/
+fpga projects/
+machine learning projects/

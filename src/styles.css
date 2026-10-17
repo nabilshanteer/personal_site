@@ -1,0 +1,1496 @@
+@font-face {
+  font-family: 'Priestacy';
+  src: url('/fonts/priestacy.otf') format('opentype');
+  font-display: block;
+}
+
+@font-face {
+  font-family: 'Corpta';
+  src: url('/fonts/corpta-demo.otf') format('opentype');
+  font-display: block;
+}
+
+:root {
+  /* Tells the browser to render its own furniture — scrollbars, form
+     controls — in dark. Without it the scrollbar comes back light grey
+     against a near-black page. */
+  color-scheme: dark;
+
+  /* The board is the background now, so the base beneath it is dark
+     and the type is set light against it. */
+  --base: #0a0c10;
+  --ink: #eef1f6;
+  /* Corpta is a display face — fine for names and headings, hard work for
+     a paragraph. Anything that has to be read sits in this instead. */
+  --font-read: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+/* The scrollbar, in the site's own colours rather than the system's.
+   Applies to the page and to the project panel's inner scroll alike. */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: #06080b; }
+
+::-webkit-scrollbar-thumb {
+  background: rgba(238, 241, 246, 0.16);
+  border: 2px solid #06080b;
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover { background: rgba(255, 143, 58, 0.65); }
+::-webkit-scrollbar-corner { background: #06080b; }
+
+/* Firefox has no pseudo-elements for this, only the two properties. */
+html {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(238, 241, 246, 0.2) #06080b;
+}
+
+html {
+  height: 100%;
+  scroll-behavior: smooth;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+}
+
+body {
+  margin: 0;
+  background: var(--base);
+  color: var(--ink);
+  font-family: 'Corpta', system-ui, sans-serif;
+}
+
+/* --- Panel -------------------------------------------------------- */
+
+.panel {
+  position: relative;
+  width: 100%;
+  height: 100svh;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+/* 1 — the base the board sits on */
+.field {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: var(--base);
+}
+
+/* 2 — the hidden backdrop: board photograph + line work */
+.backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* 3 — the portrait */
+.portrait {
+  position: absolute;
+  z-index: 4;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  height: min(88svh, 58vw);
+  aspect-ratio: 1 / 1;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 1.1s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.portrait[data-ready='true'] { opacity: 1; }
+.portrait canvas { display: block; position: absolute; inset: 0; z-index: 1; }
+
+/* 4 — the name */
+.mark {
+  position: absolute;
+  z-index: 5;
+  top: clamp(0.5rem, 1vh, 0.9rem);
+  left: clamp(0.6rem, 1vw, 1rem);
+  margin: 0;
+  font-weight: 400;
+  user-select: none;
+}
+
+/* The whole name is the home button. */
+.mark__link {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center; /* NABIL centres over AL-SHANTEER */
+  color: inherit;
+  text-decoration: none;
+  line-height: 1;
+  transition: opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.mark__link:hover { opacity: 0.62; }
+
+.mark__link:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 10px;
+}
+
+.mark__given {
+  font-family: 'Priestacy', cursive;
+  font-size: clamp(0.55rem, 1.3vw, 1.25rem);
+  letter-spacing: 0.02em;
+  /* Priestacy's capitals carry long descenders; this is the clearance
+     that keeps them off the line below. */
+  line-height: 1.02;
+  padding-bottom: 0.3em;
+}
+
+.mark__family {
+  font-family: 'Corpta', system-ui, sans-serif;
+  font-size: clamp(0.75rem, 1.85vw, 1.75rem);
+  letter-spacing: 0.08em;
+  line-height: 1;
+}
+
+/* Corpta DEMO ships without a hyphen, so that one glyph is set in a
+   grotesque and tucked in to match the surrounding weight. */
+.mark__hyphen {
+  font-family: 'Helvetica Neue', Arial, system-ui, sans-serif;
+  font-size: 0.78em;
+  padding-inline: 0.06em;
+  vertical-align: 0.06em;
+  display: inline-block;
+}
+
+
+/* --- Datasheet callouts ------------------------------------------- */
+
+.callouts {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  width: 100%;
+  height: 100%;
+  overflow: visible; /* the labels park beyond the frame */
+  pointer-events: none;
+}
+
+.callout__pad,
+.callout__drill,
+.callout__line,
+.callout__label,
+.callout__detail {
+  opacity: 0;
+  transition: opacity 0.4s ease var(--delay);
+}
+
+.callout__pad {
+  fill: none;
+  stroke: var(--ink);
+  stroke-width: 2;
+  transform-box: fill-box;
+  transform-origin: center;
+  transform: scale(0.2);
+  transition: opacity 0.3s ease var(--delay), transform 0.45s cubic-bezier(0.16, 1, 0.3, 1) var(--delay);
+}
+
+.callout__drill { fill: var(--ink); }
+
+.callout__line {
+  fill: none;
+  stroke: var(--ink);
+  stroke-width: 1.4;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  /* Drawn, not faded in — it should read as a measurement being taken. */
+  transition: stroke-dashoffset 0.65s cubic-bezier(0.22, 1, 0.36, 1) var(--delay),
+              opacity 0.2s ease var(--delay);
+}
+
+.callout__label {
+  font-family: 'Corpta', system-ui, sans-serif;
+  font-size: 19px;
+  letter-spacing: 0.05em;
+  fill: var(--ink);
+  transition: opacity 0.5s ease calc(var(--delay) + 0.3s);
+}
+
+.callout__detail {
+  font-family: ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+  font-size: 12.5px;
+  letter-spacing: 0.03em;
+  fill: rgba(238, 241, 246, 0.55);
+  transition: opacity 0.5s ease calc(var(--delay) + 0.38s);
+}
+
+.callouts[data-on='true'] .callout__pad,
+.callouts[data-on='true'] .callout__drill,
+.callouts[data-on='true'] .callout__line,
+.callouts[data-on='true'] .callout__label,
+.callouts[data-on='true'] .callout__detail {
+  opacity: 1;
+}
+
+.callouts[data-on='true'] .callout__pad { transform: scale(1); }
+.callouts[data-on='true'] .callout__line { stroke-dashoffset: 0; }
+
+/* No room for labels beside the portrait on a narrow screen. */
+@media (max-width: 900px) {
+  .callouts { display: none; }
+}
+
+/* --- Power-up ------------------------------------------------------ */
+
+.powerup {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  width: 100%;
+  height: 100%;
+  overflow: visible; /* the breakouts route past the frame */
+  pointer-events: none;
+}
+
+/* The current around his edge. Drawn, not faded — it has to travel. */
+.powerup__edge,
+.powerup__glow {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  transition: stroke-dashoffset 1.15s cubic-bezier(0.33, 0.9, 0.3, 1), opacity 0.4s ease;
+  opacity: 0;
+}
+
+.powerup__edge {
+  stroke: #fff4e4;
+  stroke-width: 2;
+}
+
+.powerup__glow {
+  stroke: #ff8a2b;
+  stroke-width: 5;
+  opacity: 0;
+}
+
+.powerup__trace {
+  fill: none;
+  stroke: #ff8f3a;
+  stroke-linecap: square;
+  stroke-linejoin: miter;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  opacity: 0;
+  transition: stroke-dashoffset 0.55s cubic-bezier(0.22, 1, 0.36, 1) var(--delay),
+              opacity 0.2s ease var(--delay);
+}
+
+.powerup__pad {
+  fill: none;
+  stroke: #ffb169;
+  stroke-width: 2;
+  opacity: 0;
+  transform-box: fill-box;
+  transform-origin: center;
+  transform: scale(0.1);
+  transition: opacity 0.3s ease calc(var(--delay) + 0.4s),
+              transform 0.4s cubic-bezier(0.16, 1, 0.3, 1) calc(var(--delay) + 0.4s);
+}
+
+.powerup__drill {
+  fill: #ffd9b0;
+  opacity: 0;
+  transition: opacity 0.3s ease calc(var(--delay) + 0.45s);
+}
+
+.powerup[data-on='true'] .powerup__edge,
+.powerup[data-on='true'] .powerup__trace { opacity: 1; }
+.powerup[data-on='true'] .powerup__glow { opacity: 0.55; }
+.powerup[data-on='true'] .powerup__pad,
+.powerup[data-on='true'] .powerup__drill { opacity: 1; }
+.powerup[data-on='true'] .powerup__pad { transform: scale(1); }
+
+.powerup[data-on='true'] .powerup__edge,
+.powerup[data-on='true'] .powerup__glow,
+.powerup[data-on='true'] .powerup__trace { stroke-dashoffset: 0; }
+
+/* --- Datasheet: power-up contour + labelled breakouts --------------- */
+
+.sheet {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  width: 100%;
+  height: 100%;
+  overflow: visible; /* the breakouts and labels sit beyond the frame */
+  pointer-events: none;
+}
+
+/* The current around his edge. Drawn, not faded — it has to travel. */
+.sheet__edge,
+.sheet__glow {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  opacity: 0;
+  transition: stroke-dashoffset 1.15s cubic-bezier(0.33, 0.9, 0.3, 1), opacity 0.4s ease;
+}
+
+.sheet__edge { stroke: #fff4e4; stroke-width: 2; }
+.sheet__glow { stroke: #ff8a2b; stroke-width: 5; }
+
+.sheet__trace {
+  fill: none;
+  stroke: #ff8f3a;
+  stroke-width: 1.8;
+  stroke-linecap: square;
+  stroke-linejoin: miter;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  opacity: 0;
+  transition: stroke-dashoffset 0.6s cubic-bezier(0.22, 1, 0.36, 1) var(--delay),
+              opacity 0.2s ease var(--delay);
+}
+
+.sheet__tap {
+  fill: #ffd9b0;
+  opacity: 0;
+  transition: opacity 0.25s ease var(--delay);
+}
+
+.sheet__pad {
+  fill: none;
+  stroke: #ffb169;
+  stroke-width: 2;
+  opacity: 0;
+  transform-box: fill-box;
+  transform-origin: center;
+  transform: scale(0.1);
+  transition: opacity 0.3s ease calc(var(--delay) + 0.42s),
+              transform 0.4s cubic-bezier(0.16, 1, 0.3, 1) calc(var(--delay) + 0.42s);
+}
+
+.sheet__drill {
+  fill: #ffd9b0;
+  opacity: 0;
+  transition: opacity 0.3s ease calc(var(--delay) + 0.48s);
+}
+
+.sheet__label {
+  font-family: 'Corpta', system-ui, sans-serif;
+  font-size: 17px;
+  letter-spacing: 0.05em;
+  fill: #ffd2a4;
+  opacity: 0;
+  transition: opacity 0.45s ease calc(var(--delay) + 0.5s);
+}
+
+.sheet__detail {
+  font-family: ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+  font-size: 11.5px;
+  letter-spacing: 0.03em;
+  fill: rgba(255, 190, 140, 0.6);
+  opacity: 0;
+  transition: opacity 0.45s ease calc(var(--delay) + 0.56s);
+}
+
+.sheet:not([data-on='true']) { visibility: hidden; }
+
+.sheet[data-on='true'] .sheet__edge,
+.sheet[data-on='true'] .sheet__trace,
+.sheet[data-on='true'] .sheet__tap,
+.sheet[data-on='true'] .sheet__pad,
+.sheet[data-on='true'] .sheet__drill,
+.sheet[data-on='true'] .sheet__label,
+.sheet[data-on='true'] .sheet__detail { opacity: 1; }
+
+.sheet[data-on='true'] .sheet__glow { opacity: 0.5; }
+.sheet[data-on='true'] .sheet__pad { transform: scale(1); }
+
+.sheet[data-on='true'] .sheet__edge,
+.sheet[data-on='true'] .sheet__glow,
+.sheet[data-on='true'] .sheet__trace { stroke-dashoffset: 0; }
+
+/* No room for labels beside the portrait on a narrow screen. */
+@media (max-width: 900px) {
+  .sheet { display: none; }
+}
+
+/* --- Chrome: mark, controls, card --------------------------------- */
+
+:root {
+  --accent: #ff8f3a;
+  --accent-soft: #ffd2a4;
+}
+
+/* The mark, top centre */
+
+/* The dock holds the mark and what it turns into. It is wider than the
+   mark so the cursor stays inside it on the way to a link. */
+.monogram-dock {
+  position: absolute;
+  z-index: 6;
+  top: clamp(0.5rem, 1vh, 0.9rem);
+  left: 50%;
+  transform: translateX(-50%);
+  width: clamp(200px, 20vw, 260px);
+  height: clamp(30px, 3vw, 42px);
+  display: grid;
+  place-items: center;
+}
+
+/* The mark opens sideways: the package widens into a bar that holds the
+   two links, and stays open for as long as the cursor is on it.
+
+   Sideways and not outwards for a plain reason — this sits a few pixels
+   below the top of the window, so anything that grows upwards is cut off
+   by the edge of the screen. Only the width moves; the height is the
+   height of the mark throughout.
+
+   It stays rather than flashing past, because its job once open is to
+   show that there are now two things here to click. */
+.monogram-dock::after {
+  content: '';
+  position: absolute;
+  z-index: 0;
+  top: 50%;
+  left: 50%;
+  translate: -50% -50%;
+  width: clamp(30px, 3vw, 42px);
+  height: clamp(30px, 3vw, 42px);
+  border: 1px solid rgba(255, 143, 58, 0);
+  border-radius: 10px;
+  background: rgba(10, 9, 14, 0);
+  pointer-events: none;
+  transition: width 0.5s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.35s ease,
+    background 0.35s ease, border-radius 0.45s ease;
+}
+
+.monogram-dock:hover::after,
+.monogram-dock:focus-within::after {
+  width: 100%;
+  border-color: rgba(255, 143, 58, 0.55);
+  background: rgba(10, 9, 14, 0.62);
+  border-radius: 999px;
+}
+
+.monogram {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  margin: auto;
+  width: clamp(30px, 3vw, 42px);
+  height: 100%;
+  display: grid;
+  place-items: center;
+  color: var(--ink);
+  transition: color 0.35s ease, opacity 0.3s ease, transform 0.35s ease;
+}
+
+/* The two places he can be found, sitting exactly where the mark was. */
+.monogram__links {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.1rem;
+  /* The container only gates clicks now; each link fades itself in, so
+     they can arrive one after the other instead of as a block. */
+  pointer-events: none;
+}
+
+.monogram__links a {
+  font-family: 'Corpta', system-ui, sans-serif;
+  font-size: 0.62rem;
+  letter-spacing: 0.18em;
+  color: rgba(238, 241, 246, 0.72);
+  text-decoration: none;
+  padding: 0.3rem 0.1rem;
+  border-bottom: 1px solid transparent;
+  opacity: 0;
+  transform: translateY(7px) scale(0.96);
+  transition: color 0.25s ease, border-color 0.25s ease, opacity 0.3s ease,
+    transform 0.45s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.monogram__links a:hover {
+  color: var(--accent);
+  border-bottom-color: rgba(255, 143, 58, 0.7);
+}
+
+/* The swap. Keyboard users get it on focus, which hover alone would
+   leave out entirely. */
+/* Outwards, not inwards. It used to shrink away, which read as the mark
+   being dismissed rather than opening. */
+.monogram-dock:hover .monogram,
+.monogram-dock:focus-within .monogram {
+  opacity: 0;
+  transform: scale(1.08);
+  pointer-events: none;
+  transition: opacity 0.26s ease 0.06s, transform 0.5s cubic-bezier(0.16, 1, 0.3, 1),
+    color 0.35s ease;
+}
+
+.monogram-dock:hover .monogram__links,
+.monogram-dock:focus-within .monogram__links {
+  pointer-events: auto;
+}
+
+.monogram-dock:hover .monogram__links a,
+.monogram-dock:focus-within .monogram__links a {
+  opacity: 1;
+  transform: none;
+}
+
+/* Behind the swell, and one after the other. */
+.monogram-dock:hover .monogram__links a:nth-child(1),
+.monogram-dock:focus-within .monogram__links a:nth-child(1) { transition-delay: 0.17s; }
+
+.monogram-dock:hover .monogram__links a:nth-child(2),
+.monogram-dock:focus-within .monogram__links a:nth-child(2) { transition-delay: 0.25s; }
+
+@media (prefers-reduced-motion: reduce) {
+  .monogram,
+  .monogram__links a { transition: opacity 0.2s linear; }
+  .monogram-dock:hover .monogram { transform: none; }
+  .monogram-dock:hover .monogram__links a,
+  .monogram-dock:focus-within .monogram__links a { transform: none; transition-delay: 0s; }
+  .monogram-dock::after { transition: border-color 0.2s linear, background 0.2s linear; }
+}
+
+.monogram svg { width: 100%; height: auto; display: block; overflow: visible; }
+
+.monogram__body,
+.monogram__trace,
+.monogram__pin {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: stroke 0.35s ease, filter 0.35s ease;
+}
+
+.monogram__trace { stroke-width: 2.4; }
+.monogram__pad { fill: currentColor; transition: fill 0.35s ease; }
+
+
+
+/* Top right: projects and menu */
+
+.controls {
+  position: absolute;
+  z-index: 6;
+  top: clamp(0.5rem, 1vh, 0.9rem);
+  right: clamp(0.6rem, 1vw, 1rem);
+  display: flex;
+  align-items: center;
+  gap: clamp(0.5rem, 1.2vw, 1.1rem);
+}
+
+.control {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.72rem 0.7rem;
+  border: 1px solid rgba(238, 241, 246, 0.22);
+  border-radius: 4px;
+  background: rgba(10, 12, 16, 0.55);
+  color: var(--ink);
+  font-family: 'Corpta', system-ui, sans-serif;
+  font-size: clamp(0.62rem, 0.85vw, 0.8rem);
+  letter-spacing: 0.08em;
+  line-height: 1;
+  text-decoration: none;
+  cursor: pointer;
+  transition: color 0.3s ease, border-color 0.3s ease, background 0.3s ease;
+}
+
+.control--icon { padding: 0.72rem 0.55rem; }
+
+.control__icon {
+  width: clamp(13px, 1.1vw, 16px);
+  height: auto;
+  display: block;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.control__icon rect { fill: currentColor; stroke: none; }
+.control__icon circle { fill: currentColor; stroke: none; }
+.control__route { fill: none; stroke: currentColor; }
+
+.control:hover {
+  color: var(--accent);
+  border-color: rgba(255, 143, 58, 0.55);
+  background: rgba(255, 143, 58, 0.08);
+}
+
+/* Bottom left: the location card */
+
+.card {
+  position: absolute;
+  z-index: 6;
+  left: clamp(0.6rem, 1vw, 1rem);
+  bottom: clamp(0.6rem, 1.4vh, 1.1rem);
+  width: 152px;
+  height: 238px;
+  color: var(--ink);
+}
+
+.card__frame {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  fill: rgba(10, 12, 16, 0.3);
+  stroke: rgba(238, 241, 246, 0.35);
+  stroke-width: 1;
+}
+
+.card__tab {
+  position: absolute;
+  top: 4px;
+  left: 10px;
+  font-family: 'Corpta', system-ui, sans-serif;
+  font-size: 0.55rem;
+  letter-spacing: 0.14em;
+  color: rgba(238, 241, 246, 0.75);
+}
+
+.card__inner {
+  position: absolute;
+  inset: 27px 11px 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+/* Each symbol answers to its own hover, not the card's. */
+.card__map,
+.card__symbol {
+  color: var(--ink);
+  transition: color 0.35s ease;
+}
+
+.card__map {
+  width: 86px;
+  height: 58px;
+  display: grid;
+  place-items: center;
+  perspective: 360px;
+}
+
+.card__map svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  /* Turning slowly on its vertical axis — a cut-out held to the light. */
+  animation: turn 14s linear infinite;
+  transform-style: preserve-3d;
+}
+
+.card__map path {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.5;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+  opacity: 0.6;
+  transition: opacity 0.35s ease, filter 0.35s ease;
+}
+
+.card__map:hover {
+  color: var(--accent);
+}
+
+.card__map:hover path {
+  opacity: 1;
+  filter: drop-shadow(0 0 5px rgba(255, 143, 58, 0.75));
+}
+
+@keyframes turn {
+  from { transform: rotateY(0deg); }
+  to   { transform: rotateY(360deg); }
+}
+
+.card__place {
+  margin: 0.4rem 0 0;
+  font-family: 'Corpta', system-ui, sans-serif;
+  font-size: 0.62rem;
+  letter-spacing: 0.07em;
+  line-height: 1.25;
+}
+
+.card__rule {
+  width: 100%;
+  height: 0;
+  border: 0;
+  border-top: 1px solid rgba(238, 241, 246, 0.25);
+  margin: 0.6rem 0 0;
+}
+
+/* His own line art, used as a mask so CSS owns the colour. */
+.card__symbol {
+  position: relative;
+  width: 120px;
+  height: 56px;
+  margin-top: 0.5rem;
+  display: grid;
+  place-items: center;
+  color: var(--ink);
+  transition: color 0.35s ease, filter 0.35s ease;
+}
+
+.card__chip {
+  width: 48px;
+  height: 48px;
+  background: currentColor;
+  opacity: 0.78;
+  -webkit-mask: url('/img/symbol.png') center / contain no-repeat;
+  mask: url('/img/symbol.png') center / contain no-repeat;
+  transition: opacity 0.35s ease;
+}
+
+.card__wires {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+/* Each run draws itself, holds, then retracts. The cycle is four times
+   as long as one reach, and each set is delayed by a quarter of it, so
+   exactly one routing is out at any moment and the symbol never reaches
+   the same way twice running. */
+.wire {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0.75;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: wire-grow 16s ease-in-out infinite;
+  animation-delay: calc(var(--set, 0) * 4s + var(--wire-delay, 0ms));
+}
+
+.wire__pad {
+  fill: currentColor;
+  opacity: 0;
+  animation: wire-pad 16s ease-in-out infinite;
+  animation-delay: calc(var(--set, 0) * 4s + var(--wire-delay, 0ms));
+}
+
+@keyframes wire-grow {
+  0%        { stroke-dashoffset: 1; }
+  6%        { stroke-dashoffset: 0; }
+  17%       { stroke-dashoffset: 0; }
+  24%, 100% { stroke-dashoffset: 1; }
+}
+
+@keyframes wire-pad {
+  0%, 5%    { opacity: 0; }
+  8%, 16%   { opacity: 0.9; }
+  22%, 100% { opacity: 0; }
+}
+
+.card__symbol:hover {
+  color: var(--accent);
+  filter: drop-shadow(0 0 6px rgba(255, 143, 58, 0.7));
+}
+
+.card__symbol:hover .card__chip { opacity: 1; }
+
+.card__role {
+  margin: 0.55rem 0 0;
+  font-family: ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+  font-size: 0.6rem;
+  letter-spacing: 0.03em;
+  line-height: 1.4;
+  color: rgba(238, 241, 246, 0.7);
+}
+
+@media (max-width: 900px) {
+  .card { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card__map svg { animation: none; }
+}
+
+/* --- Menu ---------------------------------------------------------- */
+
+.menu {
+  position: absolute;
+  inset: 0;
+  z-index: 8;
+  pointer-events: none;
+}
+
+.menu[data-open='true'] { pointer-events: auto; }
+
+.menu__scrim {
+  position: absolute;
+  inset: 0;
+  border: 0;
+  padding: 0;
+  cursor: default;
+  background: rgba(6, 7, 10, 0);
+  transition: background 0.5s ease;
+}
+
+.menu[data-open='true'] .menu__scrim { background: rgba(6, 7, 10, 0.55); }
+
+.menu__panel {
+  position: absolute;
+  top: clamp(0.5rem, 1vh, 0.9rem);
+  right: clamp(0.6rem, 1vw, 1rem);
+  width: min(304px, 72vw);
+  padding: 1.1rem 1.2rem 1.3rem;
+  border: 1px solid rgba(255, 143, 58, 0.3);
+  border-radius: 6px;
+  background: rgba(8, 10, 14, 0.82);
+  backdrop-filter: blur(6px);
+  /* Unfolds from the button that summoned it. */
+  transform-origin: top right;
+  transform: scale(0.9) translateY(-10px);
+  opacity: 0;
+  visibility: hidden;
+  transition: transform 0.45s cubic-bezier(0.16, 1, 0.3, 1),
+              opacity 0.3s ease,
+              visibility 0.45s;
+}
+
+.menu[data-open='true'] .menu__panel {
+  transform: none;
+  opacity: 1;
+  visibility: visible;
+}
+
+/* The bus the entries hang off, drawn down the left of the panel. */
+.menu__bus {
+  position: absolute;
+  top: 3.1rem;
+  left: 1.2rem;
+  width: 10px;
+  height: calc(100% - 4.4rem);
+  overflow: visible;
+}
+
+.menu__bus path {
+  fill: none;
+  stroke: rgba(255, 143, 58, 0.55);
+  stroke-width: 1;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  transition: stroke-dashoffset 0.7s cubic-bezier(0.22, 1, 0.36, 1) 0.1s;
+}
+
+.menu[data-open='true'] .menu__bus path { stroke-dashoffset: 0; }
+
+.menu__close {
+  position: absolute;
+  top: 0.7rem;
+  right: 0.8rem;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(238, 241, 246, 0.2);
+  border-radius: 4px;
+  background: none;
+  color: var(--ink);
+  cursor: pointer;
+  transition: color 0.3s ease, border-color 0.3s ease, transform 0.3s ease;
+}
+
+.menu__close svg { width: 13px; height: 13px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; }
+.menu__close:hover { color: var(--accent); border-color: rgba(255, 143, 58, 0.6); transform: rotate(90deg); }
+
+.menu__list {
+  list-style: none;
+  margin: 2.2rem 0 0;
+  padding: 0;
+}
+
+.menu__item {
+  opacity: 0;
+  transform: translateX(14px);
+  transition: opacity 0.4s ease var(--delay), transform 0.5s cubic-bezier(0.16, 1, 0.3, 1) var(--delay);
+}
+
+.menu[data-open='true'] .menu__item { opacity: 1; transform: none; }
+
+.menu__link {
+  display: grid;
+  grid-template-columns: 18px 1fr;
+  align-items: baseline;
+  column-gap: 0.65rem;
+  padding: 0.5rem 0;
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.menu__pad {
+  grid-row: span 2;
+  align-self: center;
+  width: 7px;
+  height: 7px;
+  border: 1px solid rgba(255, 143, 58, 0.75);
+  border-radius: 50%;
+  margin-left: -1px;
+  background: rgba(8, 10, 14, 1);
+  transition: background 0.3s ease, box-shadow 0.3s ease;
+}
+
+.menu__label {
+  font-family: 'Corpta', system-ui, sans-serif;
+  font-size: 1.15rem;
+  letter-spacing: 0.04em;
+  line-height: 1.1;
+  transition: color 0.3s ease;
+}
+
+.menu__note {
+  grid-column: 2;
+  font-family: ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+  font-size: 0.62rem;
+  letter-spacing: 0.04em;
+  color: rgba(238, 241, 246, 0.45);
+}
+
+.menu__link:hover .menu__label { color: var(--accent); }
+.menu__link:hover .menu__pad {
+  background: var(--accent);
+  box-shadow: 0 0 8px rgba(255, 143, 58, 0.8);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .menu__panel,
+  .menu__item { transition-duration: 0.01ms; }
+}
+
+/* --- Stage: the hand-off from panel one to panel two --------------- */
+
+.stage {
+  position: relative;
+  height: 185vh; /* the room the transition has to happen in */
+}
+
+/* The picture. Pulls back and dims as the stage is scrolled, and takes a
+   visible edge as it stops being a screen and starts being a frame. */
+.frame {
+  position: fixed;
+  inset: 0;
+  z-index: 2;
+  transform: translateY(var(--frame-y, 0px)) scale(var(--frame-scale, 1));
+  opacity: var(--frame-fade, 1);
+  will-change: transform, opacity;
+}
+
+.stage[data-past='true'] .frame,
+.stage[data-past='true'] .signature {
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.frame .panel {
+  border-radius: calc(10px * var(--frame-edge, 0));
+  box-shadow:
+    0 0 0 calc(1px * var(--frame-edge, 0)) rgba(255, 143, 58, 0.45),
+    0 calc(40px * var(--frame-edge, 0)) calc(80px * var(--frame-edge, 0)) rgba(0, 0, 0, 0.6);
+}
+
+/* The autograph, over the picture and free to exceed it. */
+.signature {
+  position: fixed;
+  z-index: 3;
+  top: 50%;
+  left: 50%;
+  /* Big enough to overrun the frame, small enough to stay on screen. */
+  width: min(62vw, 820px);
+  transform: translate(-50%, -38%) translateY(var(--frame-y, 0px)) rotate(-7deg);
+  opacity: var(--sign-fade, 0);
+  pointer-events: none;
+}
+
+.signature svg {
+  width: 100%;
+  height: auto;
+  display: block;
+  overflow: visible;
+
+  /* Written on, left to right, by one gradient mask on one element. The
+     version that masked each letter separately looked better and cost
+     five live masks a frame, which is what made it crawl. */
+  --edge: calc(var(--sign, 0) * 124% - 12%);
+  -webkit-mask-image: linear-gradient(
+    99deg,
+    #000 0,
+    #000 var(--edge),
+    rgba(0, 0, 0, 0.45) calc(var(--edge) + 4%),
+    transparent calc(var(--edge) + 11%)
+  );
+  mask-image: linear-gradient(
+    99deg,
+    #000 0,
+    #000 var(--edge),
+    rgba(0, 0, 0, 0.45) calc(var(--edge) + 4%),
+    transparent calc(var(--edge) + 11%)
+  );
+}
+
+.signature path {
+  fill: var(--accent);
+  fill-opacity: 0.94;
+  filter: drop-shadow(0 0 16px rgba(255, 143, 58, 0.4));
+}
+
+/* The two bands, behind the picture. */
+.bands {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: clamp(0.5rem, 1.6vh, 1.4rem);
+  opacity: var(--band, 0);
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.band { overflow: hidden; }
+
+.band__track {
+  display: flex;
+  width: max-content;
+  animation: band-ltr 38s linear infinite;
+}
+
+.band[data-direction='rtl'] .band__track {
+  animation-name: band-rtl;
+  animation-duration: 44s;
+}
+
+.band__text {
+  font-family: 'Corpta', system-ui, sans-serif;
+  font-size: clamp(2.2rem, 7vw, 6rem);
+  letter-spacing: 0.02em;
+  line-height: 1;
+  white-space: pre;
+  color: rgba(238, 241, 246, 0.13);
+}
+
+.band[data-direction='rtl'] .band__text {
+  color: rgba(255, 143, 58, 0.16);
+}
+
+@keyframes band-ltr {
+  from { transform: translateX(-50%); }
+  to   { transform: translateX(0); }
+}
+
+@keyframes band-rtl {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+
+/* --- Panel two: the work, on a dial --------------------------------- */
+
+.projects {
+  position: relative;
+  z-index: 4;
+  /* One screen of scroll per project, so each gets its turn at the marker. */
+  height: calc(var(--count, 6) * 62vh + 40vh);
+  background: var(--base);
+}
+
+.projects__sticky {
+  position: sticky;
+  top: 0;
+  height: 100svh;
+  overflow: hidden;
+}
+
+.projects__label {
+  position: absolute;
+  top: clamp(1.2rem, 4vh, 2.6rem);
+  left: clamp(1.2rem, 4vw, 3rem);
+  margin: 0;
+  font-family: 'Corpta', system-ui, sans-serif;
+  font-size: 0.7rem;
+  letter-spacing: 0.22em;
+  color: rgba(238, 241, 246, 0.5);
+}
+
+/* The encoder itself, hung off the left edge so it reads as a big wheel
+   rather than a logo. */
+.dial {
+  --size: min(74vh, 54vw);
+  --r: calc(var(--size) * 0.44); /* where the titles sit, from the centre */
+  position: absolute;
+  top: 50%;
+  left: 4vw;
+  width: var(--size);
+  aspect-ratio: 1;
+  transform: translateY(-50%);
+}
+
+.dial__disc {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  transform: rotate(calc(var(--angle, 0) * 1deg));
+  will-change: transform;
+}
+
+.dial__rim {
+  fill: none;
+  stroke: rgba(238, 241, 246, 0.16);
+  stroke-width: 0.6;
+}
+
+.dial__rim--inner { stroke-dasharray: 2 4; }
+
+.dial__tooth {
+  stroke: rgba(238, 241, 246, 0.3);
+  stroke-width: 0.9;
+}
+
+.dial__spoke line {
+  stroke: rgba(238, 241, 246, 0.22);
+  stroke-width: 0.8;
+  transition: stroke 0.4s ease;
+}
+
+.dial__spoke circle {
+  fill: none;
+  stroke: rgba(238, 241, 246, 0.4);
+  stroke-width: 1.4;
+  transition: stroke 0.4s ease, fill 0.4s ease;
+}
+
+.dial__spoke .dial__drill { fill: var(--base); stroke: none; }
+
+.dial__spoke[data-active='true'] line { stroke: var(--accent); }
+.dial__spoke[data-active='true'] circle { stroke: var(--accent); }
+.dial__spoke[data-active='true'] .dial__drill { fill: var(--accent); }
+
+.dial__hub {
+  fill: rgba(20, 23, 29, 0.9);
+  stroke: rgba(238, 241, 246, 0.35);
+  stroke-width: 1;
+}
+
+.dial__pin line {
+  stroke: rgba(255, 143, 58, 0.65);
+  stroke-width: 1.4;
+  stroke-linecap: round;
+}
+
+/* The titles ride the same rotation, each counter-rotated so it stays
+   level however far round the wheel has turned. */
+.dial__titles {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  transform: rotate(calc(var(--angle, 0) * 1deg));
+  will-change: transform;
+}
+
+/* A zero-sized anchor point, so the rotation pivots on the dial's centre
+   rather than on the title's own box — the titles are different widths,
+   and a percentage translate would put every one at a different radius. */
+.dial__title {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  /* A zero-sized anchor point, so the rotation pivots on the dial's
+     centre. The text hangs off it in .dial__row — give this box a size
+     and every title ends up at a different radius. */
+  width: 0;
+  height: 0;
+  transform:
+    rotate(calc(var(--a) * 1deg))
+    translateX(var(--r))
+    rotate(calc((0deg - var(--a) * 1deg) - var(--angle, 0) * 1deg));
+}
+
+.dial__row {
+  position: absolute;
+  left: 0.9rem;
+  top: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 0.7rem;
+  white-space: nowrap;
+  transform: translateY(-50%);
+  color: rgba(238, 241, 246, 0.32);
+  transition: color 0.45s ease;
+}
+
+.dial__index {
+  font-family: ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+  font-size: 0.66rem;
+  letter-spacing: 0.22em;
+  color: rgba(255, 143, 58, 0.6);
+}
+
+.dial__name {
+  font-family: 'Corpta', system-ui, sans-serif;
+  font-size: clamp(1.1rem, 2.4vw, 2.3rem);
+  letter-spacing: 0.04em;
+  line-height: 1;
+}
+
+.dial__title { transition: opacity 0.45s ease; }
+.dial__title[data-distance='0'] { opacity: 1; }
+.dial__title[data-distance='1'] { opacity: 0.4; }
+.dial__title[data-distance='2'] { opacity: 0.14; }
+.dial__title[data-distance='3'],
+.dial__title[data-distance='4'],
+.dial__title[data-distance='5'] { opacity: 0; pointer-events: none; }
+
+.dial__title[data-active='true'] .dial__row { color: var(--ink); }
+.dial__title[data-active='true'] .dial__index { color: var(--accent); }
+
+
+/* Where the reading is taken: three o'clock. */
+.dial__marker {
+  position: absolute;
+  top: 50%;
+  left: calc(50% + var(--r));
+  width: 46px;
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+.dial__marker svg {
+  width: 100%;
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  filter: drop-shadow(0 0 6px rgba(255, 143, 58, 0.6));
+}
+
+.dial__marker circle { fill: rgba(255, 143, 58, 0.25); }
+
+/* The readout, off to the right. */
+.readout {
+  position: absolute;
+  right: clamp(1.4rem, 5vw, 5rem);
+  top: 50%;
+  transform: translateY(-50%);
+  text-align: right;
+}
+
+.readout__count {
+  margin: 0;
+  font-family: ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+  font-size: clamp(1.6rem, 4vw, 3rem);
+  color: var(--accent);
+  line-height: 1;
+}
+
+.readout__count span { color: rgba(238, 241, 246, 0.35); font-size: 0.45em; }
+
+.readout__kicker {
+  margin: 0.8rem 0 0;
+  font-family: 'Corpta', system-ui, sans-serif;
+  font-size: 0.8rem;
+  letter-spacing: 0.14em;
+  color: rgba(238, 241, 246, 0.7);
+}
+
+.readout__year {
+  margin: 0.2rem 0 0;
+  font-family: ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+  font-size: 0.68rem;
+  color: rgba(238, 241, 246, 0.35);
+}
+
+.sheet-list {
+  list-style: none;
+  margin: 1.4rem 0 0 auto;
+  padding: 0;
+  /* Narrow enough that a wrapped project name cannot reach back across
+     the dial and sit on top of the category it belongs to. */
+  max-width: 17rem;
+}
+
+.sheet-list__item {
+  padding: 0.5rem 0;
+  border-top: 1px solid rgba(238, 241, 246, 0.12);
+  opacity: 0;
+  transform: translateY(6px);
+  animation: sheet-in 0.5s cubic-bezier(0.16, 1, 0.3, 1) var(--delay) forwards;
+}
+
+@keyframes sheet-in {
+  to { opacity: 1; transform: none; }
+}
+
+.sheet-list__item a {
+  display: flex;
+  align-items: baseline;
+  justify-content: flex-end;
+  gap: 0.8rem;
+  color: rgba(238, 241, 246, 0.55);
+  text-decoration: none;
+  transition: color 0.3s ease;
+}
+
+.sheet-list__item[data-lead='true'] a { color: var(--ink); }
+.sheet-list__item a:hover { color: var(--accent); }
+
+.sheet-list__title {
+  font-family: 'Corpta', system-ui, sans-serif;
+  font-size: 0.95rem;
+  letter-spacing: 0.04em;
+  /* Titles are written with their own line breaks in content.js, so a long
+     name splits where it reads best rather than wherever it runs out of
+     room. Anything without one is balanced instead of leaving an orphan. */
+  white-space: pre-line;
+  text-wrap: balance;
+  text-align: right;
+  line-height: 1.18;
+}
+
+.sheet-list__year {
+  font-family: ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+  font-size: 0.6rem;
+  color: rgba(238, 241, 246, 0.3);
+}
+
+/* A project filed here but leading elsewhere says so. */
+.sheet-list__bridge {
+  display: block;
+  margin-top: 0.15rem;
+  font-family: ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+  font-size: 0.56rem;
+  letter-spacing: 0.06em;
+  color: rgba(255, 143, 58, 0.5);
+}
+
+.readout__open {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 1.6rem;
+  padding: 0.6rem 0.9rem;
+  border: 1px solid rgba(255, 143, 58, 0.5);
+  border-radius: 4px;
+  color: var(--accent);
+  font-family: 'Corpta', system-ui, sans-serif;
+  font-size: 0.72rem;
+  letter-spacing: 0.14em;
+  text-decoration: none;
+  transition: background 0.3s ease, color 0.3s ease;
+}
+
+.readout__open svg {
+  width: 15px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.readout__open:hover { background: rgba(255, 143, 58, 0.14); }
+
+@media (max-width: 760px) {
+  .dial { left: -18vw; width: 92vw; }
+  .readout { right: 1rem; }
+  .dial__name { font-size: 1rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .band__track { animation: none; }
+}
+
+
+/* =================================================================
+   The menu button that rides over an open panel.
+   ================================================================= */
+
+/* Above the panels, which sit at 45. Its own stacking context, so the
+   menu it opens comes with it rather than being trapped under the panel
+   that is already on screen. */
+.panelnav {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  pointer-events: none;
+}
+
+/* Tucked to the left of the panel's own close button, which sits at the
+   same corner at the same size. The two are measured from the same
+   values so they stay a pair at every width. */
+.panelnav__button {
+  position: absolute;
+  top: clamp(1rem, 3vh, 2rem);
+  right: calc(clamp(1rem, 3vw, 2.5rem) + 38px + 0.55rem);
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 1px solid rgba(238, 241, 246, 0.25);
+  border-radius: 5px;
+  background: rgba(8, 10, 14, 0.8);
+  color: var(--ink);
+  cursor: pointer;
+  pointer-events: auto;
+  opacity: 0;
+  animation: panelnav-in 0.5s 0.25s ease forwards;
+  transition: color 0.3s ease, border-color 0.3s ease;
+}
+
+@keyframes panelnav-in {
+  to { opacity: 1; }
+}
+
+.panelnav__button:hover {
+  color: var(--accent);
+  border-color: rgba(255, 143, 58, 0.6);
+}
+
+.panelnav__button svg {
+  width: 19px;
+  fill: currentColor;
+  stroke: none;
+}
+
+.panelnav__route {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .panelnav__button { animation-duration: 0.01s; animation-delay: 0s; }
+}

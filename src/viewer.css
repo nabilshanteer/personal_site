@@ -1,0 +1,227 @@
+/* =================================================================
+   Alternating sections, the trace between them, and the diagram viewer.
+   ================================================================= */
+
+/* --- the run of sections ------------------------------------------- */
+
+.run { max-width: 74rem; margin: 0 auto; }
+
+.run__node { position: relative; }
+
+/* The block moves across the page; the words inside it always read from
+   the left. Right-aligned paragraphs are hard work and look it. */
+.work__block[data-side='left'] { margin-right: auto; }
+.work__block[data-side='right'] { margin-left: auto; }
+
+/* Lit where you are reading, stepped back everywhere else. */
+.work__block {
+  opacity: 0.32;
+  transition: opacity 0.55s ease;
+}
+
+.work__block[data-focus='true'] { opacity: 1; }
+
+.work__block h3 {
+  transition: font-size 0.45s cubic-bezier(0.16, 1, 0.3, 1),
+              letter-spacing 0.45s ease,
+              color 0.45s ease,
+              text-shadow 0.45s ease,
+              border-color 0.45s ease;
+}
+
+.work__block[data-focus='true'] h3 {
+  font-size: 0.95rem;
+  letter-spacing: 0.24em;
+  color: #ffb169;
+  text-shadow: 0 0 18px rgba(255, 143, 58, 0.55);
+  border-color: rgba(255, 143, 58, 0.6);
+}
+
+@media (max-width: 760px) {
+  .work__block[data-side='right'] { margin-left: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .work__block { opacity: 1; }
+}
+
+/* --- the diagram viewer --------------------------------------------- */
+
+.viewer {
+  /* Nothing in here is meant to be selected: a stray drag used to turn
+     the diagrams blue, and grabbing an image handed the gesture to the
+     browser's own drag instead of to the board, which left the whole
+     whiteboard stuck. */
+  user-select: none;
+  -webkit-user-select: none;
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  display: grid;
+  grid-template-rows: auto 1fr;
+  background: rgba(4, 5, 8, 0.97);
+  animation: work-in 0.3s ease;
+}
+
+/* The board leaves the same way the lightbox does, and the board itself
+   recedes further than the chrome around it. */
+.viewer[data-closing='true'] {
+  animation: shutter-out 0.3s cubic-bezier(0.55, 0, 0.9, 0.2) forwards;
+  pointer-events: none;
+}
+
+.viewer[data-closing='true'] .board {
+  transition: transform 0.3s cubic-bezier(0.55, 0, 0.9, 0.2);
+  transform-origin: 50% 50%;
+  opacity: 0.75;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .viewer[data-closing='true'] { animation-duration: 0.12s; }
+}
+
+.viewer__bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem clamp(1rem, 3vw, 2rem);
+  border-bottom: 1px solid rgba(238, 241, 246, 0.12);
+}
+
+.viewer__title {
+  margin: 0;
+  font-family: 'Corpta', system-ui, sans-serif;
+  font-size: clamp(0.9rem, 2vw, 1.25rem);
+  letter-spacing: 0.06em;
+  color: var(--ink);
+}
+
+.viewer__note {
+  margin: 0.2rem 0 0;
+  font-family: var(--font-read);
+  font-size: 0.78rem;
+  color: rgba(238, 241, 246, 0.5);
+}
+
+.viewer__versions { display: flex; gap: 0.5rem; }
+
+.viewer__versions button {
+  padding: 0.45rem 0.7rem;
+  border: 1px solid rgba(238, 241, 246, 0.2);
+  border-radius: 4px;
+  background: none;
+  font-family: 'Corpta', system-ui, sans-serif;
+  font-size: 0.66rem;
+  letter-spacing: 0.1em;
+  color: rgba(238, 241, 246, 0.6);
+  cursor: pointer;
+  transition: color 0.3s ease, border-color 0.3s ease, background 0.3s ease;
+}
+
+.viewer__versions button:hover { color: var(--accent); border-color: rgba(255, 143, 58, 0.5); }
+
+.viewer__versions button[data-active='true'] {
+  color: var(--accent);
+  border-color: rgba(255, 143, 58, 0.7);
+  background: rgba(255, 143, 58, 0.1);
+}
+
+.viewer__tools {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-family: ui-monospace, monospace;
+  font-size: 0.65rem;
+  color: rgba(238, 241, 246, 0.45);
+}
+
+.viewer__tools button {
+  padding: 0.4rem 0.6rem;
+  border: 1px solid rgba(238, 241, 246, 0.2);
+  border-radius: 4px;
+  background: none;
+  font-family: inherit;
+  font-size: 0.65rem;
+  letter-spacing: 0.1em;
+  color: var(--ink);
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+}
+
+.viewer__tools button:hover { color: var(--accent); border-color: rgba(255, 143, 58, 0.5); }
+.viewer__tools svg { width: 13px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; }
+
+.viewer__stage {
+  position: relative;
+  overflow: hidden;
+  cursor: grab;
+  touch-action: none;
+}
+
+.viewer__stage:active { cursor: grabbing; }
+
+/* One dotted board, with every diagram of the set laid out on it. The
+   dot pitch matches the drawings' own background, so the join does not
+   read as a join. */
+.board {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform-origin: 0 0;
+  display: grid;
+  grid-template-columns: repeat(2, max-content);
+  gap: 90px;
+  padding: 90px;
+  background-color: #f7f7f5;
+  background-image: radial-gradient(rgba(20, 20, 20, 0.16) 1.4px, transparent 1.4px);
+  background-size: 22px 22px;
+  box-shadow: 0 0 120px rgba(0, 0, 0, 0.6);
+}
+
+.board[data-count='1'] { grid-template-columns: max-content; }
+
+.board__item { margin: 0; }
+
+/* Some drawings are exported far smaller than the others and read as an
+   afterthought beside them. `scale` on a figure gives it back its share
+   of the board; zoom is used rather than transform so the grid reflows
+   around the new size instead of letting it overlap its neighbours. */
+.board__item { zoom: var(--fig-scale, 1); }
+
+.board__item img {
+  display: block;
+  /* The pointer always reaches the stage underneath, so a drag that
+     starts on a diagram still pans the board. */
+  pointer-events: none;
+  -webkit-user-drag: none;
+  /* The drawings carry their own dotted ground; mix-blend lets it sit on
+     the board's instead of boxing each one in. */
+  mix-blend-mode: multiply;
+}
+
+.board__item figcaption {
+  margin-top: 14px;
+  font-family: ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+  font-size: 15px;
+  color: rgba(20, 22, 26, 0.55);
+}
+
+.board__item--legend {
+  grid-column: 1 / -1;
+  padding-top: 40px;
+  border-top: 1px dashed rgba(20, 22, 26, 0.25);
+}
+
+.viewer__hint {
+  position: absolute;
+  right: clamp(1rem, 3vw, 2rem);
+  bottom: 0.6rem;
+  margin: 0;
+  font-family: ui-monospace, monospace;
+  font-size: 0.58rem;
+  color: rgba(238, 241, 246, 0.3);
+  pointer-events: none;
+}

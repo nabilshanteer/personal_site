@@ -1,0 +1,527 @@
+/* =================================================================
+   A project, opened over the dial.
+   ================================================================= */
+
+.work {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  background: rgba(5, 6, 9, 0.96);
+  animation: work-in 0.45s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes work-in {
+  from { opacity: 0; transform: translateY(26px) scale(0.985); }
+}
+
+/* On the way out it drops away rather than cutting, so the dial behind
+   it reads as having been there all along. */
+.work[data-closing='true'] {
+  animation: work-out 0.42s cubic-bezier(0.5, 0, 0.75, 0) forwards;
+  pointer-events: none;
+}
+
+@keyframes work-out {
+  to { opacity: 0; transform: translateY(40px) scale(0.97); }
+}
+
+.work__sheet {
+  height: 100%;
+  overflow-y: auto;
+  padding: clamp(2.5rem, 7vh, 5rem) clamp(1.2rem, 6vw, 6rem) 6rem;
+}
+
+.work__close {
+  position: fixed;
+  top: clamp(1rem, 3vh, 2rem);
+  right: clamp(1rem, 3vw, 2.5rem);
+  z-index: 2;
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(238, 241, 246, 0.25);
+  border-radius: 5px;
+  background: rgba(8, 10, 14, 0.8);
+  color: var(--ink);
+  cursor: pointer;
+  transition: color 0.3s ease, border-color 0.3s ease, transform 0.3s ease;
+}
+
+.work__close svg {
+  width: 15px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+}
+
+.work__close:hover {
+  color: var(--accent);
+  border-color: rgba(255, 143, 58, 0.6);
+  transform: rotate(90deg);
+}
+
+/* --- the part number ---------------------------------------------- */
+
+.work__head {
+  position: relative;
+  max-width: 62rem;
+  /* Room for the links sitting in the top right corner. */
+  padding-right: clamp(0rem, 18vw, 22rem);
+}
+
+.work__eyebrow,
+.work__role {
+  margin: 0;
+  font-family: ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+  font-size: 0.68rem;
+  letter-spacing: 0.12em;
+  color: rgba(255, 143, 58, 0.75);
+}
+
+.work__title {
+  margin: 0.5rem 0 0;
+  font-family: 'Corpta', system-ui, sans-serif;
+  font-size: clamp(2.4rem, 7vw, 5.5rem);
+  letter-spacing: 0.01em;
+  line-height: 0.95;
+  color: var(--ink);
+}
+
+.work__subtitle {
+  margin: 0.4rem 0 0.9rem;
+  font-family: 'Corpta', system-ui, sans-serif;
+  font-size: clamp(0.9rem, 2vw, 1.3rem);
+  letter-spacing: 0.06em;
+  color: rgba(238, 241, 246, 0.6);
+}
+
+.work__role { color: rgba(238, 241, 246, 0.5); }
+
+.work__pads {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 1rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.work__pads li {
+  padding: 0.3rem 0.6rem;
+  border: 1px solid rgba(255, 143, 58, 0.45);
+  border-radius: 3px;
+  font-family: ui-monospace, monospace;
+  font-size: 0.6rem;
+  letter-spacing: 0.1em;
+  color: var(--accent);
+}
+
+.work__summary {
+  margin: 1.4rem 0 0;
+  max-width: 46rem;
+  font-family: var(--font-read);
+  font-size: clamp(0.95rem, 1.6vw, 1.15rem);
+  line-height: 1.6;
+  color: rgba(238, 241, 246, 0.8);
+}
+
+/* --- the numbers, settling in ------------------------------------- */
+
+.ratings {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+  gap: 1px;
+  margin: clamp(2.5rem, 6vh, 4rem) 0;
+  background: rgba(238, 241, 246, 0.12);
+  border: 1px solid rgba(238, 241, 246, 0.12);
+}
+
+.rating {
+  padding: 1.1rem 1rem;
+  background: #0a0c10;
+  opacity: 0;
+  animation: rating-in 0.5s cubic-bezier(0.16, 1, 0.3, 1) var(--delay) forwards;
+}
+
+@keyframes rating-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: none; }
+}
+
+.rating__value {
+  margin: 0;
+  font-family: ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+  font-size: clamp(1.6rem, 3.4vw, 2.6rem);
+  line-height: 1;
+  color: var(--accent);
+}
+
+.rating__value span { font-size: 0.5em; margin-left: 0.1em; }
+
+.rating__label {
+  margin: 0.55rem 0 0;
+  font-family: 'Corpta', system-ui, sans-serif;
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+  color: rgba(238, 241, 246, 0.75);
+}
+
+.rating__note {
+  margin: 0.25rem 0 0;
+  font-family: ui-monospace, monospace;
+  font-size: 0.58rem;
+  color: rgba(238, 241, 246, 0.38);
+}
+
+/* --- the poster ---------------------------------------------------- */
+
+.work__hero { margin: 0 0 clamp(2rem, 5vh, 3.5rem); }
+
+.work__hero button {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 1px solid rgba(238, 241, 246, 0.14);
+  background: none;
+  cursor: zoom-in;
+}
+
+.work__hero img { display: block; width: 100%; height: auto; }
+
+/* A film sits where the poster would, at the same width, with its own
+   controls. Black rather than the paper colour, because letterboxing
+   against off-white looks like a mistake. */
+.work__film {
+  display: block;
+  width: 100%;
+  height: auto;
+  border: 1px solid rgba(238, 241, 246, 0.14);
+  background: #000;
+}
+
+.work__hero figcaption,
+.band__hint {
+  margin: 0.6rem 0 0;
+  font-family: ui-monospace, monospace;
+  font-size: 0.6rem;
+  letter-spacing: 0.06em;
+  color: rgba(238, 241, 246, 0.35);
+}
+
+/* --- the figures, drifting ----------------------------------------- */
+
+.band { margin: 0 0 clamp(2.5rem, 6vh, 4rem); }
+
+.band-row {
+  overflow-x: auto;
+  overflow-y: hidden;
+  margin-bottom: 1.6rem;
+  scrollbar-width: none;
+  overscroll-behavior-x: contain;
+}
+
+.band-row::-webkit-scrollbar { display: none; }
+
+.band-row__track {
+  display: flex;
+  gap: 1.6rem;
+  width: max-content;
+  padding: 0 0.2rem;
+}
+
+/* Rectangles at their own proportions: these are diagrams, and a square
+   crop cuts the half of them that explains anything. */
+.band-row__cell {
+  flex: none;
+  height: clamp(150px, 20vh, 230px);
+  padding: 0;
+  border: 1px solid rgba(238, 241, 246, 0.14);
+  background: #f7f7f5;
+  cursor: zoom-in;
+  transition: border-color 0.3s ease, transform 0.3s ease;
+  display: flex;
+  flex-direction: column;
+}
+
+.band-row__cell:hover {
+  border-color: rgba(255, 143, 58, 0.7);
+  transform: translateY(-3px);
+}
+
+.band-row__cell img {
+  height: 100%;
+  width: auto;
+  object-fit: contain;
+  display: block;
+}
+
+.band-row__cell span {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+
+/* --- the writing ---------------------------------------------------- */
+
+.work__columns {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(20rem, 1fr));
+  gap: clamp(1.5rem, 4vw, 3.5rem);
+}
+
+.work__block { margin-bottom: clamp(2rem, 5vh, 3.2rem); max-width: 46rem; }
+
+.work__block h3 {
+  margin: 0 0 0.9rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid rgba(255, 143, 58, 0.3);
+  font-family: 'Corpta', system-ui, sans-serif;
+  font-size: 0.72rem;
+  letter-spacing: 0.2em;
+  color: var(--accent);
+}
+
+.work__block p {
+  margin: 0 0 0.95rem;
+  font-family: var(--font-read);
+  font-size: 1rem;
+  line-height: 1.65;
+  color: rgba(238, 241, 246, 0.72);
+}
+
+/* --- iterations ------------------------------------------------------ */
+
+.steps { list-style: none; margin: 0; padding: 0; }
+
+.step {
+  display: flex;
+  gap: 1.1rem;
+  padding: 1rem 0;
+  border-top: 1px solid rgba(238, 241, 246, 0.1);
+}
+
+.step__tag {
+  flex: none;
+  width: 46px;
+  height: 46px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(255, 143, 58, 0.5);
+  border-radius: 50%;
+  font-family: ui-monospace, monospace;
+  font-size: 0.8rem;
+  color: var(--accent);
+}
+
+.step__body h4 {
+  margin: 0 0 0.3rem;
+  font-family: 'Corpta', system-ui, sans-serif;
+  font-size: 1rem;
+  letter-spacing: 0.04em;
+  color: var(--ink);
+}
+
+.step__body p {
+  margin: 0;
+  font-family: var(--font-read);
+  font-size: 0.92rem;
+  line-height: 1.6;
+  color: rgba(238, 241, 246, 0.62);
+}
+
+/* --- what he did ------------------------------------------------------ */
+
+.did { list-style: none; margin: 0; padding: 0; }
+
+.did li {
+  position: relative;
+  padding: 0 0 0.7rem 1.4rem;
+  font-family: var(--font-read);
+  font-size: 0.96rem;
+  line-height: 1.6;
+  color: rgba(238, 241, 246, 0.72);
+}
+
+.did li::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0.65em;
+  width: 0.7rem;
+  height: 1px;
+  background: var(--accent);
+}
+
+/* --- parts list and links --------------------------------------------- */
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.chips li {
+  padding: 0.35rem 0.6rem;
+  border: 1px solid rgba(238, 241, 246, 0.18);
+  border-radius: 3px;
+  font-family: ui-monospace, monospace;
+  font-size: 0.62rem;
+  color: rgba(238, 241, 246, 0.65);
+}
+
+.work__links {
+  position: absolute;
+  top: 0;
+  right: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.6rem;
+}
+
+@media (max-width: 760px) {
+  .work__head { padding-right: 0; }
+  .work__links { position: static; flex-direction: row; flex-wrap: wrap; margin-bottom: 1.2rem; }
+}
+
+.work__links a {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.7rem 1rem;
+  border: 1px solid rgba(255, 143, 58, 0.5);
+  border-radius: 4px;
+  font-family: 'Corpta', system-ui, sans-serif;
+  font-size: 0.74rem;
+  letter-spacing: 0.1em;
+  color: var(--accent);
+  text-decoration: none;
+  transition: background 0.3s ease;
+}
+
+.work__links a:hover { background: rgba(255, 143, 58, 0.14); }
+
+/* The report is the one link that is filled rather than outlined: it is
+   the primary thing to do on the page, and everything else is secondary. */
+.work__report {
+  background: rgba(255, 143, 58, 0.16);
+  border-color: rgba(255, 143, 58, 0.85) !important;
+  color: #ffc08a !important;
+  font-weight: 600;
+}
+
+.work__report:hover { background: rgba(255, 143, 58, 0.3) !important; }
+
+.work__links svg {
+  width: 13px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* --- a figure, full size ----------------------------------------------- */
+
+/* Dismissed, a picture falls back into the page rather than blinking out:
+   it shrinks away from the eye, softens, and takes its backdrop with it.
+   The inner image pulls back a little further than the backdrop so the two
+   separate as they go, which is what makes it read as depth. */
+@keyframes shutter-out {
+  to { opacity: 0; transform: scale(0.84); filter: blur(5px); }
+}
+
+@keyframes shutter-out-inner {
+  to { transform: scale(0.9) translateY(10px); }
+}
+
+.lightbox[data-closing='true'] {
+  animation: shutter-out 0.3s cubic-bezier(0.55, 0, 0.9, 0.2) forwards;
+  pointer-events: none;
+}
+
+.lightbox[data-closing='true'] img {
+  animation: shutter-out-inner 0.3s cubic-bezier(0.55, 0, 0.9, 0.2) forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lightbox[data-closing='true'],
+  .lightbox[data-closing='true'] img { animation-duration: 0.12s; }
+}
+
+.lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  display: grid;
+  place-content: center;
+  gap: 0.8rem;
+  padding: 3vh 3vw;
+  background: rgba(4, 5, 8, 0.95);
+  cursor: zoom-out;
+  animation: work-in 0.3s ease;
+}
+
+.lightbox img {
+  max-width: 92vw;
+  max-height: 84vh;
+  object-fit: contain;
+  background: #f7f7f5;
+}
+
+.lightbox p {
+  margin: 0;
+  text-align: center;
+  font-family: ui-monospace, monospace;
+  font-size: 0.65rem;
+  color: rgba(238, 241, 246, 0.5);
+}
+
+/* --- the dial's list items are buttons now ------------------------------ */
+
+.sheet-list__item button {
+  display: flex;
+  align-items: center;
+  text-align: right;
+  justify-content: flex-end;
+  gap: 0.8rem;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: rgba(238, 241, 246, 0.55);
+  cursor: pointer;
+  transition: color 0.3s ease;
+}
+
+/* Whoever the work was for, small, ahead of the name. It sits at the
+   left of the row so the marks line up down the column rather than
+   drifting with each title's length. */
+.sheet-list__mark {
+  flex: none;
+  order: -1;
+  margin-right: auto;
+  width: auto;
+  height: 17px;
+  max-width: 34px;
+  object-fit: contain;
+  opacity: 0.85;
+  transition: opacity 0.3s ease, filter 0.3s ease;
+}
+
+.sheet-list__item button:hover .sheet-list__mark { opacity: 1; }
+
+.sheet-list__item button:disabled .sheet-list__mark { opacity: 0.35; }
+
+.sheet-list__item[data-lead='true'] button { color: var(--ink); }
+.sheet-list__item button:hover:not(:disabled) { color: var(--accent); }
+.sheet-list__item button:disabled { cursor: default; opacity: 0.45; }
+
+

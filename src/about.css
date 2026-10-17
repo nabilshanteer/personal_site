@@ -1,0 +1,996 @@
+/* =================================================================
+   The about sequence: lights down, waveform up, page crystallises.
+   ================================================================= */
+
+/* The house lights. Everything that was on screen before the sequence
+   started dims through this one property, which the sequence writes once
+   per frame. At rest it is 1 and costs nothing. */
+:root { --house: 1; --shake-x: 0px; --shake-y: 0px; }
+
+/* Every bass hit knocks the room. The background layers and the sequence
+   move together, so it reads as the screen itself being hit rather than
+   as one element sliding about on top of another. */
+/* The knock is applied to the sky alone.
+
+   It used to sit on `.about`, which is an ancestor of the scrolling
+   sheet — a transformed, will-change ancestor takes a scroller off the
+   compositor's fast path and puts every scroll frame back on the main
+   thread, repainting the whole subtree. Moving it onto the canvas, which
+   is a sibling of the scroller rather than its parent, keeps the shake
+   and gives the scrolling back. */
+.about__wave {
+  transform: translate3d(var(--shake-x), var(--shake-y), 0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .about__wave { transform: none; }
+}
+
+:root[data-overlay] .panel,
+:root[data-overlay] .stage,
+:root[data-overlay] .projects {
+  filter: brightness(var(--house)) saturate(calc(0.25 + var(--house) * 0.75));
+  transition: filter 0.1s linear;
+}
+
+/* Nothing behind the sequence should be reachable while it runs. */
+:root[data-overlay] .panel,
+:root[data-overlay] .projects { pointer-events: none; }
+
+/* And once the page has arrived, nothing behind it should be composited
+   either. The sky covers the screen, so the panels underneath are two
+   full-size filtered layers and a hundred-odd running animations being
+   painted for nobody. Taking them out of the tree is the single largest
+   thing that can be done for the frame rate here. */
+:root[data-overlay='here'] .stage,
+:root[data-overlay='here'] .projects {
+  /* `visibility` rather than `display`: painting is skipped either way,
+     but the panels keep their size. With `display: none` the portrait's
+     canvas measured zero, its renderer was resized to nothing, and the
+     picture was gone when the sequence closed. */
+  visibility: hidden;
+}
+
+:root[data-overlay] { overflow: hidden; }
+
+.about {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  pointer-events: none;
+}
+
+.about[data-phase='off'] { display: none; }
+
+/* --- the waveform ---------------------------------------------------- */
+
+.about__wave {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  /* Paced against the blackout, so the room and the background cross
+     over each other rather than one waiting for the other. */
+  animation: wave-in 2.2s ease forwards;
+}
+
+@keyframes wave-in {
+  to { opacity: 1; }
+}
+
+/* The background holds exactly the same brightness before and after the
+   page arrives. Dimming it on arrival made the whole thing look like it
+   had stepped back; it is the room, and the room does not change. */
+.about[data-phase='crystallised'] .about__wave { opacity: 1; }
+
+/* --- a hobby, and the pictures orbiting it ---------------------------- */
+
+/* The join between two sections. A hairline that fades out at both ends
+   with a pad sitting on it, which is the same vocabulary as the dial and
+   the callouts on the first panel: a trace, and a place where something
+   is mounted on it. */
+.hobby + .hobby::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 8%;
+  right: 8%;
+  height: 1px;
+  background: linear-gradient(
+    to right,
+    transparent,
+    rgba(255, 186, 118, 0.3) 22%,
+    rgba(255, 186, 118, 0.3) 78%,
+    transparent
+  );
+}
+
+.hobby + .hobby::after {
+  content: '';
+  position: absolute;
+  top: -5px;
+  left: 50%;
+  width: 11px;
+  height: 11px;
+  margin-left: -5.5px;
+  border: 1px solid rgba(255, 186, 118, 0.55);
+  border-radius: 50%;
+  background: #0b0710;
+  box-shadow: 0 0 14px rgba(255, 143, 58, 0.35);
+}
+
+.hobby {
+  position: relative;
+  /* Four full-height sections, each with a couple of dozen animated
+     images on it. Off-screen ones are skipped entirely rather than
+     painted and thrown away, which is most of the cost of scrolling. */
+  /* `content-visibility: auto` used to live here, and it was the cause of
+     the shifting. A skipped section is laid out at an estimated height;
+     the moment it renders for real that estimate is replaced by its true
+     height, and everything below it jumps by the difference. No estimate
+     matches every section at every window size, so the jump cannot be
+     tuned away — it has to go. The orbits are still paused when they are
+     off screen, which was the larger part of the saving anyway. */
+  /* Taller than the arcs are wide, so one section's pictures cannot turn
+     up alongside the next one's words. */
+  min-height: 118vh;
+  /* Not clipped: a picture has to be able to carry on round and leave by
+     the side of the screen. The sections are tall enough that they do not
+     reach each other anyway. */
+  display: grid;
+  align-content: center;
+  padding: clamp(2rem, 8vh, 6rem) 0;
+}
+
+/* The card and the arcs trade sides down the page. */
+.hobby[data-side='right'] { justify-items: start; }
+.hobby[data-side='left'] { justify-items: end; }
+
+/* Bubbles, not rows. Each one is its own object with its own weight,
+   rather than another line in a list. */
+.hobby__bubble {
+  position: relative;
+  z-index: 2;
+  max-width: min(33rem, 78vw);
+  padding: clamp(1.8rem, 4vw, 3rem) clamp(1.8rem, 4vw, 3.2rem);
+  border-radius: 2.6rem;
+  border: 1px solid rgba(255, 199, 143, 0.26);
+  background:
+    radial-gradient(120% 140% at 18% 0%, rgba(255, 170, 96, 0.14), transparent 62%),
+    rgba(12, 9, 16, 0.88);
+  box-shadow:
+    0 30px 70px -36px rgba(0, 0, 0, 0.85),
+    inset 0 1px 0 rgba(255, 220, 180, 0.14);
+}
+
+.hobby__bubble h3 {
+  margin: 0;
+  font-family: 'Corpta', system-ui, sans-serif;
+  font-size: clamp(1.9rem, 5vw, 3.1rem);
+  line-height: 1.02;
+  letter-spacing: 0.01em;
+  color: #ffd2a1;
+}
+
+.hobby__bubble p {
+  margin: 0.9rem 0 0;
+  font-family: var(--font-read);
+  font-size: clamp(1rem, 1.7vw, 1.2rem);
+  line-height: 1.6;
+  color: rgba(246, 236, 226, 0.82);
+}
+
+/* The bubble opens rather than swapping: the card lifts, the light
+   behind it comes up, and the paragraph unrolls underneath. Grid rows
+   are animated rather than height, so there is no magic number to keep
+   in step with the text. */
+.hobby__bubble {
+  cursor: default;
+  transition:
+    transform 0.5s cubic-bezier(0.16, 1, 0.3, 1),
+    border-color 0.45s ease,
+    box-shadow 0.5s ease,
+    background-color 0.45s ease;
+}
+
+/* It grows inward from whichever edge it is sitting against. Scaling from
+   the centre pushed the outer border past the scroller's clip, which is
+   why the left edge vanished on left-hand cards and the right edge on
+   right-hand ones. */
+.hobby[data-side='right'] .hobby__bubble { transform-origin: left center; }
+.hobby[data-side='left'] .hobby__bubble { transform-origin: right center; }
+
+.hobby__bubble:hover,
+.hobby__bubble:focus-within,
+.hobby__bubble:focus-visible,
+.hobby__bubble[data-open='true'] {
+  transform: translateY(-6px) scale(1.015);
+  border-color: rgba(255, 199, 143, 0.5);
+  box-shadow:
+    0 44px 90px -40px rgba(0, 0, 0, 0.9),
+    0 0 60px -22px rgba(255, 160, 80, 0.5),
+    inset 0 1px 0 rgba(255, 220, 180, 0.2);
+  outline: none;
+}
+
+.hobby__more {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  transition:
+    grid-template-rows 0.55s cubic-bezier(0.16, 1, 0.3, 1),
+    opacity 0.4s ease;
+}
+
+/* A grid item's default `min-height: auto` refuses to shrink below its
+   content, which quietly defeats the 0fr row — hence `min-height: 0`.
+   The paragraph's spacing lives inside this box so it collapses too. */
+/* The clipped box while it is opening, and the reading area once it is
+   open: long text scrolls here instead of pushing the card off the
+   screen, so the pictures beside it stay where they are. */
+.hobby__more-inner {
+  overflow: hidden;
+  min-height: 0;
+}
+
+.hobby__bubble:hover .hobby__more-inner,
+.hobby__bubble:focus-within .hobby__more-inner,
+.hobby__bubble[data-open='true'] .hobby__more-inner {
+  overflow-y: auto;
+  max-height: min(44vh, 440px);
+  /* The page behind must not start moving when this reaches its end. */
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 186, 118, 0.4) transparent;
+}
+
+.hobby__more-inner::-webkit-scrollbar { width: 6px; }
+.hobby__more-inner::-webkit-scrollbar-track { background: transparent; }
+.hobby__more-inner::-webkit-scrollbar-thumb {
+  background: rgba(255, 186, 118, 0.35);
+  border-radius: 99px;
+}
+
+/* A pinned card says so. */
+.hobby__bubble { cursor: pointer; }
+
+.hobby__bubble[data-open='true'] {
+  border-color: rgba(255, 199, 143, 0.6);
+}
+
+.hobby__bubble:hover .hobby__more,
+.hobby__bubble:focus-within .hobby__more,
+.hobby__bubble:focus-visible .hobby__more,
+.hobby__bubble[data-open='true'] .hobby__more {
+  grid-template-rows: 1fr;
+  opacity: 1;
+}
+
+.hobby__more p {
+  margin: 1.1rem 0 0;
+  padding-top: 1.1rem;
+  /* Justified, so the block has a straight edge on both sides. Hyphens
+     are on because justified text in a narrow column opens ugly gaps
+     between words without them. */
+  text-align: justify;
+  hyphens: auto;
+  -webkit-hyphens: auto;
+  text-wrap: pretty;
+  font-size: clamp(0.92rem, 1.45vw, 1.05rem);
+  color: rgba(238, 226, 214, 0.72);
+  /* Transparent until it opens, so a closed card shows no stray hairline. */
+  border-top: 1px solid transparent;
+  transition: border-color 0.45s ease;
+}
+
+.hobby__more p + p {
+  padding-top: 0;
+  border-top: 0;
+  margin-top: 0.9rem;
+}
+
+.hobby__bubble:hover .hobby__more p:first-child,
+.hobby__bubble:focus-within .hobby__more p:first-child,
+.hobby__bubble:focus-visible .hobby__more p:first-child,
+.hobby__bubble[data-open='true'] .hobby__more p:first-child {
+  border-top-color: rgba(255, 199, 143, 0.18);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hobby__bubble { transition: none; }
+  .hobby__more { transition: opacity 0.2s linear; }
+}
+
+/* --- the question box --------------------------------------------------- */
+
+.ask {
+  margin-top: 1.4rem;
+  padding-top: 1.1rem;
+  border-top: 1px dashed rgba(255, 199, 143, 0.22);
+}
+
+.ask__thread {
+  margin: 0 0 0.8rem;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 0.55rem;
+}
+
+.ask__thread li {
+  font-family: var(--font-read);
+  font-size: 0.92rem;
+  line-height: 1.55;
+  padding: 0.55rem 0.8rem;
+  border-radius: 1rem;
+  max-width: 92%;
+}
+
+.ask__thread li[data-role='user'] {
+  justify-self: end;
+  background: rgba(255, 160, 80, 0.16);
+  border: 1px solid rgba(255, 199, 143, 0.28);
+  color: #ffdfc2;
+}
+
+.ask__thread li[data-role='assistant'] {
+  justify-self: start;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: rgba(244, 233, 220, 0.86);
+}
+
+.ask__thread li[data-failed] { color: rgba(255, 170, 150, 0.9); }
+
+/* Three dots while it thinks. */
+.ask__thread li[data-waiting] { display: flex; gap: 5px; align-items: center; }
+
+.ask__thread li[data-waiting] span {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: rgba(255, 199, 143, 0.7);
+  animation: ask-think 1.1s ease-in-out infinite;
+}
+
+.ask__thread li[data-waiting] span:nth-child(2) { animation-delay: 0.15s; }
+.ask__thread li[data-waiting] span:nth-child(3) { animation-delay: 0.3s; }
+
+@keyframes ask-think {
+  50% { opacity: 0.25; transform: translateY(-2px); }
+}
+
+.ask__form { display: flex; gap: 0.5rem; }
+
+.ask__form input {
+  flex: 1;
+  min-width: 0;
+  padding: 0.6rem 0.9rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 199, 143, 0.26);
+  background: rgba(0, 0, 0, 0.3);
+  font-family: var(--font-read);
+  font-size: 0.92rem;
+  color: #f6ece2;
+}
+
+.ask__form input::placeholder { color: rgba(238, 226, 214, 0.4); }
+.ask__form input:focus { outline: none; border-color: rgba(255, 199, 143, 0.6); }
+
+.ask__form button {
+  flex: none;
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 199, 143, 0.4);
+  background: rgba(255, 143, 58, 0.16);
+  color: #ffd2a1;
+  cursor: pointer;
+  transition: background 0.25s ease, opacity 0.25s ease;
+}
+
+.ask__form button:hover:not(:disabled) { background: rgba(255, 143, 58, 0.3); }
+.ask__form button:disabled { opacity: 0.35; cursor: default; }
+
+.ask__form svg {
+  width: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.ask__note {
+  margin: 0.6rem 0 0;
+  font-family: ui-monospace, monospace;
+  font-size: 0.54rem;
+  letter-spacing: 0.08em;
+  color: rgba(238, 226, 214, 0.38);
+}
+
+/* --- the two semicircles ----------------------------------------------- */
+
+/* The arcs are centred on the edge of the frame, so only the half that
+   bulges inward is ever on screen — two semicircles, the small one inside
+   the large one, turning opposite ways. */
+.orbit {
+  position: absolute;
+  top: 50%;
+  width: 0;
+  height: 0;
+  z-index: 1;
+  pointer-events: none;
+  opacity: 0;
+  animation: orbit-in 2.4s ease forwards;
+}
+
+@keyframes orbit-in {
+  to { opacity: 0.92; }
+}
+
+/* `--bulge` is which way the arc opens; the pictures ride the half that
+   points into the page. */
+/* Pulled out to the true edge of the screen rather than the text margin,
+   so a picture travels the whole way to the side before it goes. */
+.orbit[data-side='right'] { right: calc(var(--gutter) * -1); --bulge: -1; }
+.orbit[data-side='left'] { left: calc(var(--gutter) * -1); --bulge: 1; }
+
+/* The path itself, drawn as a dotted arc so the pictures read as
+   travelling along something rather than drifting in a curve by
+   coincidence. Half the ring is masked away, since only the half that
+   bulges into the page is ever on screen. */
+.orbit__ring {
+  position: absolute;
+  inset: 0;
+}
+
+.orbit__ring::before {
+  content: '';
+  position: absolute;
+  /* Centred on the orbit origin, which is the point the arms rotate
+     about, so the dashes land exactly under the pictures. */
+  left: calc(var(--r) * -1);
+  top: calc(var(--r) * -1);
+  width: calc(var(--r) * 2);
+  height: calc(var(--r) * 2);
+  border-radius: 50%;
+  border: 1px dashed rgba(255, 206, 160, 0.22);
+  -webkit-mask-image: linear-gradient(
+    to var(--mask-to, right), #000 0 47%, transparent 53% 100%
+  );
+  mask-image: linear-gradient(
+    to var(--mask-to, right), #000 0 47%, transparent 53% 100%
+  );
+}
+
+.orbit[data-side='right'] { --mask-to: right; }
+.orbit[data-side='left'] { --mask-to: left; }
+
+.orbit__ring--outer::before { border-style: dotted; border-color: rgba(255, 206, 160, 0.16); }
+
+.orbit__ring--inner { --r: clamp(155px, 22vw, 270px); --size: clamp(74px, 8.6vw, 116px); }
+.orbit__ring--outer { --r: clamp(255px, 35vw, 430px); --size: clamp(90px, 10.4vw, 142px); }
+
+/* The outer ring runs the other way, so the two streams pass each other. */
+.orbit__ring--outer .orbit__spoke,
+.orbit__ring--outer .orbit__arm,
+.orbit__ring--outer .orbit__arm img { animation-direction: reverse; }
+
+/* Paused unless the section is on screen, so one orbit turns at a time
+   instead of four. */
+.hobby:not([data-live='true']) .orbit__spoke,
+.hobby:not([data-live='true']) .orbit__arm,
+.hobby:not([data-live='true']) .orbit__arm img { animation-play-state: paused; }
+
+.orbit__spoke {
+  position: absolute;
+  inset: 0;
+  animation: sweep var(--dur) linear infinite;
+  animation-delay: var(--delay);
+}
+
+.orbit__arm {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform: translate(calc(var(--r) * var(--bulge)), 0);
+  animation: arc-fade var(--dur) linear infinite;
+  animation-delay: var(--delay);
+}
+
+/* Counter-rotated against its own spoke on the same clock, so a picture
+   travels the arc without ever tipping over. */
+.orbit__arm img {
+  display: block;
+  width: var(--size);
+  height: var(--size);
+  margin: calc(var(--size) / -2) 0 0 calc(var(--size) / -2);
+  object-fit: cover;
+  border-radius: 1.1rem;
+  border: 1px solid rgba(255, 214, 170, 0.28);
+  animation: unsweep var(--dur) linear infinite;
+  animation-delay: var(--delay);
+}
+
+/* Past a quarter turn at both ends. At ninety degrees a picture is still
+   in the middle of the screen, which is where they used to wink out; at a
+   hundred and thirty it has carried on round and gone off the side, so
+   the fade happens where nobody can see it. */
+/* Well past a quarter turn at both ends. At a hundred and fifty-five
+   degrees a picture has carried on round until it is behind the edge of
+   the screen, so the fade at the very ends of the sweep happens out of
+   sight rather than at an invisible line partway down the page. */
+@keyframes sweep {
+  from { transform: rotate(-155deg); }
+  to { transform: rotate(155deg); }
+}
+
+@keyframes unsweep {
+  from { transform: rotate(155deg); }
+  to { transform: rotate(-155deg); }
+}
+
+@keyframes arc-fade {
+  0%, 100% { opacity: 0; }
+  3%, 97% { opacity: 1; }
+}
+
+@media (max-width: 760px) {
+  /* On a narrow screen the arcs would run straight through the words. */
+  .orbit { display: none; }
+  .hobby { min-height: auto; }
+  .hobby[data-side='left'] { justify-items: start; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .orbit__spoke,
+  .orbit__arm,
+  .orbit__arm img { animation: none; }
+  .orbit__arm { opacity: 1; }
+}
+
+/* The keyboard note. It sits on its own dark pill, because plain text
+   over the lit part of the sky is unreadable. */
+.about__hint {
+  position: absolute;
+  z-index: 5;
+  left: 50%;
+  bottom: clamp(0.8rem, 2.4vh, 1.4rem);
+  transform: translateX(-50%);
+  margin: 0;
+  padding: 0.4rem 0.9rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 214, 170, 0.22);
+  background: rgba(8, 6, 12, 0.72);
+  font-family: ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+  font-size: 0.56rem;
+  letter-spacing: 0.14em;
+  color: rgba(250, 238, 226, 0.78);
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+@media (max-width: 620px) {
+  .about__hint { font-size: 0.5rem; letter-spacing: 0.1em; }
+}
+
+/* The waveform's own layer. Full screen while the page is arriving, then
+   flown into the player and handed over to the small canvas there. */
+.about__beam {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  transform-origin: center;
+}
+
+.about__beam[data-flying='true'] {
+  transition:
+    transform 0.9s cubic-bezier(0.65, 0, 0.35, 1),
+    opacity 0.9s ease;
+  transform:
+    translate(var(--fly-x, 0px), var(--fly-y, 0px))
+    scale(var(--fly-sx, 0.1), var(--fly-sy, 0.05));
+  opacity: 0;
+}
+
+/* Once it is down the layer is gone entirely; the player draws its own. */
+.about__beam[data-landed='true'] { display: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .about__beam[data-flying='true'] { transition: opacity 0.2s linear; transform: none; }
+}
+
+/* A way out of the wait, for the second visit. */
+.about__skip {
+  position: absolute;
+  z-index: 5;
+  right: clamp(1rem, 3vw, 2.5rem);
+  bottom: clamp(0.8rem, 2.4vh, 1.4rem);
+  padding: 0.45rem 1rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 214, 170, 0.3);
+  background: rgba(8, 6, 12, 0.72);
+  font-family: ui-monospace, monospace;
+  font-size: 0.58rem;
+  letter-spacing: 0.22em;
+  color: rgba(250, 238, 226, 0.8);
+  cursor: pointer;
+  pointer-events: auto;
+  transition: color 0.25s ease, border-color 0.25s ease;
+}
+
+.about__skip:hover { color: var(--accent); border-color: rgba(255, 143, 58, 0.6); }
+
+/* --- the countdown ------------------------------------------------------ */
+
+/* Sits under the waveform while the page is on its way. The ring empties
+   rather than fills: it is counting down to something, not loading. */
+.countdown {
+  position: absolute;
+  left: 50%;
+  bottom: clamp(4rem, 14vh, 8rem);
+  transform: translateX(-50%);
+  width: clamp(64px, 8vw, 92px);
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+  opacity: 0;
+  animation: countdown-in 1.2s ease 0.6s forwards;
+}
+
+@keyframes countdown-in {
+  to { opacity: 1; }
+}
+
+.countdown svg {
+  grid-area: 1 / 1;
+  width: 100%;
+  height: auto;
+  transform: rotate(-90deg);
+  overflow: visible;
+}
+
+.countdown circle {
+  fill: none;
+  stroke-width: 2.5;
+  stroke-linecap: round;
+}
+
+.countdown__track { stroke: rgba(255, 199, 143, 0.16); }
+
+.countdown__run {
+  stroke: var(--accent);
+  stroke-dasharray: 1;
+  /* --run goes 0 to 1 across the wait; the drawn arc is what is left. */
+  stroke-dashoffset: var(--run, 0);
+  filter: drop-shadow(0 0 6px rgba(255, 143, 58, 0.6));
+}
+
+.countdown__num {
+  grid-area: 1 / 1;
+  font-family: ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+  font-size: clamp(1.1rem, 1.8vw, 1.6rem);
+  color: #ffd2a1;
+  font-variant-numeric: tabular-nums;
+}
+
+.countdown__word {
+  grid-area: 2 / 1;
+  margin-top: 0.5rem;
+  font-family: ui-monospace, monospace;
+  font-size: 0.5rem;
+  letter-spacing: 0.34em;
+  color: rgba(255, 186, 118, 0.6);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .countdown { animation-duration: 0.2s; }
+}
+
+/* --- the player ---------------------------------------------------------- */
+
+/* Pinned top left, outside the scrolling sheet, so it stays put while the
+   page is read. It appears with the music and takes the waveform over from
+   the sky once the page has arrived. */
+.player {
+  position: absolute;
+  z-index: 5;
+  top: clamp(0.9rem, 2.4vh, 1.6rem);
+  left: clamp(0.9rem, 2.4vw, 1.8rem);
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 0.6rem 0.85rem;
+  border: 1px solid rgba(255, 199, 143, 0.26);
+  border-radius: 999px;
+  background: rgba(12, 9, 16, 0.82);
+  pointer-events: auto;
+  opacity: 0;
+  animation: player-in 0.9s ease 0.5s forwards;
+}
+
+@keyframes player-in {
+  to { opacity: 1; }
+}
+
+/* No point holding a slot open for something that is still filling the
+   screen: the box stays narrow through the transition and opens when the
+   waveform arrives. */
+.player__meter {
+  display: block;
+  width: 0;
+  height: 26px;
+  opacity: 0;
+  margin-right: -0.85rem;
+  transition:
+    width 0.75s cubic-bezier(0.16, 1, 0.3, 1),
+    margin-right 0.75s cubic-bezier(0.16, 1, 0.3, 1),
+    opacity 0.5s ease 0.45s;
+}
+
+.player[data-here='true'] .player__meter {
+  width: 104px;
+  margin-right: 0;
+  opacity: 1;
+}
+
+.player {
+  transition: padding 0.75s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Fixed, so the box does not grow and shrink as tracks change. A long
+   title is cut with an ellipsis rather than allowed to push the controls
+   around. */
+.player__words {
+  width: clamp(104px, 12vw, 150px);
+  min-width: 0;
+}
+
+.player__now {
+  margin: 0;
+  font-family: ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+  font-size: 0.5rem;
+  letter-spacing: 0.26em;
+  color: rgba(238, 241, 246, 0.4);
+}
+
+/* Two lines at most, and the whole title is shown rather than clipped.
+   The column is a fixed width and the block a fixed height, so the box
+   itself never changes shape as tracks go by. */
+.player__track {
+  margin: 0.15rem 0 0;
+  font-family: 'Corpta', system-ui, sans-serif;
+  font-size: 0.78rem;
+  line-height: 1.16;
+  letter-spacing: 0.03em;
+  color: #ffd2a1;
+  white-space: normal;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.player__words { height: 36px; }
+
+.player__track span {
+  color: rgba(238, 241, 246, 0.55);
+  font-size: 0.74em;
+}
+
+.player__keys { display: flex; align-items: center; gap: 0.2rem; }
+
+.player__keys button {
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  background: none;
+  color: rgba(255, 214, 170, 0.75);
+  cursor: pointer;
+  transition: color 0.25s ease, background 0.25s ease;
+}
+
+.player__keys button:hover:not(:disabled) {
+  color: var(--accent);
+  background: rgba(255, 143, 58, 0.14);
+}
+
+.player__keys button:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+.player__keys svg {
+  width: 14px;
+  fill: currentColor;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.player__play { color: #ffd2a1 !important; }
+.player__play svg { width: 15px; }
+
+/* The link out. Same size as the transport keys, in the colour of the
+   service it goes to, so it reads as somewhere to go rather than another
+   control. */
+/* Larger than the transport keys, but still inside the height of the
+   box it sits in. */
+.player__out {
+  flex: none;
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  color: rgba(126, 214, 140, 0.8);
+  transition: color 0.25s ease, background 0.25s ease;
+}
+
+.player__out:hover { color: #1ed760; background: rgba(30, 215, 96, 0.16); }
+
+.player__out svg {
+  width: 21px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+}
+
+.player__mute[aria-pressed='true'] { color: rgba(238, 241, 246, 0.4); }
+.player__mute svg { fill: none; }
+
+@media (max-width: 620px) {
+  .player__words { display: none; }
+}
+
+/* --- the page it becomes --------------------------------------------- */
+
+.about__sheet {
+  position: absolute;
+  inset: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+  --gutter: clamp(1.2rem, 6vw, 6rem);
+  padding: 0 var(--gutter) clamp(6rem, 18vh, 12rem);
+  /* No visible scrollbar. A classic one takes ~9px off the right of this
+     box, and since the box is also what clips the arcs, the pictures on
+     the right-hand side were being cut a scrollbar's width before the
+     screen ended. */
+  scrollbar-width: none;
+  opacity: 0;
+  pointer-events: none;
+  transform: scale(1.04);
+  filter: blur(14px);
+}
+
+.about__sheet::-webkit-scrollbar { width: 0; height: 0; }
+
+.about[data-phase='crystallised'] .about__sheet {
+  pointer-events: auto;
+  animation: crystallise 1.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* It does not fade in. It resolves: out of focus and oversized, then
+   snapping to true, the way something comes out of solution. */
+@keyframes crystallise {
+  0%   { opacity: 0; transform: scale(1.04); filter: blur(14px); }
+  45%  { opacity: 1; transform: scale(0.995); filter: blur(3px); }
+  70%  { transform: scale(1.004); filter: blur(0.6px); }
+  100% { opacity: 1; transform: none; filter: none; }
+}
+
+/* --- the words -------------------------------------------------------- */
+
+.about__intro {
+  min-height: 100vh;
+  display: grid;
+  align-content: center;
+  gap: 0.4rem;
+  max-width: 48rem;
+}
+
+.about__lede {
+  margin: 1.2rem 0 0;
+  max-width: 42rem;
+  font-family: var(--font-read);
+  font-size: clamp(1rem, 1.8vw, 1.25rem);
+  line-height: 1.68;
+  color: rgba(244, 233, 220, 0.84);
+}
+
+.about__more {
+  margin: clamp(2rem, 6vh, 3.5rem) 0 0;
+  font-family: ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+  font-size: 0.6rem;
+  letter-spacing: 0.4em;
+  color: rgba(255, 186, 118, 0.6);
+  animation: breathe 2.8s ease-in-out infinite;
+}
+
+@keyframes breathe {
+  50% { opacity: 0.35; }
+}
+
+.about__eyebrow {
+  margin: 0;
+  font-family: ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+  font-size: 0.68rem;
+  letter-spacing: 0.34em;
+  color: rgba(255, 143, 58, 0.8);
+}
+
+.about__title {
+  margin: 0.4rem 0 1.4rem;
+  font-family: 'Corpta', system-ui, sans-serif;
+  font-size: clamp(2.4rem, 8vw, 6rem);
+  line-height: 0.95;
+  letter-spacing: 0.01em;
+  color: var(--ink);
+}
+
+.about__body {
+  max-width: 44rem;
+  display: grid;
+  gap: 1rem;
+}
+
+.about__body p {
+  margin: 0;
+  font-family: var(--font-read);
+  font-size: clamp(0.95rem, 1.6vw, 1.15rem);
+  line-height: 1.65;
+  color: rgba(238, 241, 246, 0.74);
+}
+
+.about__close {
+  position: absolute;
+  z-index: 6;
+  /* `.about` is pointer-events: none so the page behind stays reachable
+     during the transition; anything meant to be clicked has to opt back
+     in. This is why the close button did nothing. */
+  pointer-events: auto;
+  top: clamp(1rem, 3vh, 2rem);
+  right: clamp(1rem, 3vw, 2.5rem);
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(238, 241, 246, 0.25);
+  border-radius: 5px;
+  background: rgba(8, 10, 14, 0.8);
+  color: var(--ink);
+  cursor: pointer;
+  transition: color 0.3s ease, border-color 0.3s ease, transform 0.3s ease;
+}
+
+.about__close svg {
+  width: 15px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+}
+
+.about__close:hover {
+  color: var(--accent);
+  border-color: rgba(255, 143, 58, 0.6);
+  transform: rotate(90deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .about__wave { animation-duration: 0.3s; }
+  .about[data-phase='crystallised'] .about__sheet { animation-duration: 0.3s; }
+  .about__facet { display: none; }
+}

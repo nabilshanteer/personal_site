@@ -1,0 +1,144 @@
+/* =================================================================
+   The notes page. Local only, and deliberately plain — it is a tool,
+   not part of the site.
+   ================================================================= */
+
+.admin {
+  min-height: 100vh;
+  max-width: 54rem;
+  margin: 0 auto;
+  padding: clamp(2rem, 8vh, 5rem) clamp(1.2rem, 5vw, 3rem) 6rem;
+  font-family: var(--font-read);
+  color: rgba(238, 241, 246, 0.85);
+}
+
+.admin__eyebrow {
+  margin: 0;
+  font-family: ui-monospace, monospace;
+  font-size: 0.6rem;
+  letter-spacing: 0.3em;
+  color: rgba(255, 143, 58, 0.8);
+}
+
+.admin h1 {
+  margin: 0.5rem 0 0.8rem;
+  font-family: 'Corpta', system-ui, sans-serif;
+  font-size: clamp(1.8rem, 5vw, 2.8rem);
+  color: var(--ink);
+}
+
+.admin__lede { margin: 0 0 0.6rem; line-height: 1.6; max-width: 44rem; }
+.admin__lede code,
+.admin__local code {
+  font-family: ui-monospace, monospace;
+  font-size: 0.86em;
+  color: #ffd2a1;
+}
+
+.admin__local {
+  margin: 0 0 2rem;
+  padding: 0.6rem 0.9rem;
+  border-left: 2px solid rgba(255, 143, 58, 0.5);
+  background: rgba(255, 143, 58, 0.06);
+  font-size: 0.9rem;
+  color: rgba(238, 241, 246, 0.7);
+}
+
+.admin__drop {
+  display: grid;
+  place-items: center;
+  padding: 2.4rem 1rem;
+  margin-bottom: 1.6rem;
+  border: 1px dashed rgba(255, 199, 143, 0.35);
+  border-radius: 1rem;
+  color: rgba(238, 241, 246, 0.55);
+  transition: background 0.25s ease, border-color 0.25s ease;
+}
+
+.admin__drop[data-over='true'] {
+  border-color: rgba(255, 143, 58, 0.8);
+  background: rgba(255, 143, 58, 0.08);
+  color: #ffd2a1;
+}
+
+.admin__write { display: grid; gap: 0.8rem; margin-bottom: 2.6rem; }
+.admin__row { display: flex; gap: 0.7rem; align-items: center; flex-wrap: wrap; }
+
+.admin input[type='text'],
+.admin select,
+.admin textarea {
+  padding: 0.6rem 0.8rem;
+  border-radius: 0.6rem;
+  border: 1px solid rgba(238, 241, 246, 0.18);
+  background: rgba(0, 0, 0, 0.3);
+  color: #f6ece2;
+  font-family: inherit;
+  font-size: 0.95rem;
+}
+
+.admin input[type='text'] { flex: 1; min-width: 12rem; }
+.admin textarea { width: 100%; resize: vertical; line-height: 1.6; }
+.admin input:focus, .admin select:focus, .admin textarea:focus {
+  outline: none;
+  border-color: rgba(255, 143, 58, 0.6);
+}
+
+.admin button {
+  padding: 0.55rem 1.1rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 199, 143, 0.45);
+  background: rgba(255, 143, 58, 0.16);
+  color: #ffd2a1;
+  font-family: inherit;
+  font-size: 0.88rem;
+  cursor: pointer;
+}
+
+.admin button:hover:not(:disabled) { background: rgba(255, 143, 58, 0.3); }
+.admin button:disabled { opacity: 0.35; cursor: default; }
+
+.admin__status {
+  font-family: ui-monospace, monospace;
+  font-size: 0.74rem;
+  color: rgba(238, 241, 246, 0.5);
+}
+
+.admin__list h2 {
+  margin: 0 0 0.9rem;
+  font-family: 'Corpta', system-ui, sans-serif;
+  font-size: 1rem;
+  letter-spacing: 0.08em;
+  color: rgba(238, 241, 246, 0.8);
+}
+
+.admin__empty { color: rgba(238, 241, 246, 0.45); }
+.admin__list ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.5rem; }
+
+.admin__list li {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.2rem 1rem;
+  align-items: center;
+  padding: 0.7rem 0.9rem;
+  border: 1px solid rgba(238, 241, 246, 0.12);
+  border-radius: 0.7rem;
+}
+
+.admin__name { font-size: 0.98rem; color: var(--ink); }
+
+.admin__meta {
+  grid-column: 1;
+  font-family: ui-monospace, monospace;
+  font-size: 0.68rem;
+  color: rgba(238, 241, 246, 0.42);
+}
+
+.admin__list li button {
+  grid-row: 1 / 3;
+  grid-column: 2;
+  padding: 0.35rem 0.8rem;
+  font-size: 0.76rem;
+  border-color: rgba(255, 140, 120, 0.4);
+  background: rgba(255, 90, 70, 0.12);
+  color: rgba(255, 180, 165, 0.9);
+}
