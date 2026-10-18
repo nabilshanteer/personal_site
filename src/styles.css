@@ -1779,21 +1779,26 @@ body {
 
 /* The portrait on a phone.
 
-   `min(88svh, 58vw)` is governed by the width on a narrow screen, which
-   left a 217px square floating in the middle of an 812px tall page —
-   a small picture with a lot of nothing around it rather than a
-   portrait. It fills the width instead and stands on the bottom of the
-   frame, just above the nav bar, so the face sits where a face sits in
-   a portrait and the shoulders run off the edge.
+   Two things were wrong with it, and only one of them was the size.
+
+   `min(88svh, 58vw)` is governed by the width on a narrow screen, so the
+   face came out as a small square floating in a tall page. That part is
+   fixed by letting it fill the width.
+
+   The other was anchoring it to the bottom. On a phone with a home
+   indicator that offset is the safe-area inset plus a margin — the best
+   part of a hundred pixels — and it dropped the whole portrait well
+   below the middle of the screen. It is centred again: the panel is
+   100svh, so fifty per cent is the middle of what you can actually see.
 
    After the base rule on purpose: that one also declares top and
    transform, and at equal specificity the later rule is the one that
    counts. */
 @media (max-width: 760px) {
   .portrait {
-    top: auto;
-    bottom: calc(env(safe-area-inset-bottom, 0px) + 4.2rem);
-    transform: translateX(-50%);
-    height: min(56svh, 100vw);
+    top: 50%;
+    bottom: auto;
+    transform: translate(-50%, -50%);
+    height: min(74svh, 96vw);
   }
 }
